@@ -243,6 +243,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     </label>
     <div class="bar">
       <label class="btn alt">🖼️ เลือกจากคลังภาพ<input type="file" id="photo2" accept="image/*" class="hidden"></label>
+      <button type="button" class="btn alt" id="paste-btn">📋 วางข้อความจากโพสต์ FB / LINE</button>
       <button type="button" class="btn text" id="skip-photo">ไม่มีรูป พิมพ์เลขเอง</button>
     </div>
   </main>
@@ -251,6 +252,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
   <main class="screen hidden" id="s-r2">
     <h2 class="q">พิมพ์เลขทะเบียนตามป้าย</h2>
     <img class="preview hidden" id="r-preview" alt="รูปป้ายที่ถ่าย">
+    <label class="btn alt hidden" id="r2-photo" style="margin-bottom:12px">📷 แนบรูปป้ายจากโพสต์<input type="file" id="photo3" accept="image/*" class="hidden"></label>
     <div class="plate">
       <div class="plate-row">
         <input class="p-prefix" id="r-prefix" placeholder="กข" maxlength="4" aria-label="หมวดอักษร">
@@ -317,6 +319,20 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
 </div>
 
 <dialog id="zoom"><img id="zoom-img" alt="รูปป้ายทะเบียนขยาย"><button class="x" id="zoom-close">ปิด</button></dialog>
+
+<dialog id="paste" aria-labelledby="paste-h">
+  <div class="sheet">
+    <h2 id="paste-h">📋 วางข้อความจากโพสต์</h2>
+    <p>คัดลอกข้อความโพสต์ “เจอป้าย” จาก Facebook หรือ LINE มาวาง ระบบจะแยกเลขทะเบียน จังหวัด จุดรับ และเบอร์ให้ แล้วคุณตรวจอีกทีก่อนส่ง</p>
+    <textarea class="inp" id="paste-text" rows="6" placeholder="เช่น เก็บป้ายได้ 1กข 1234 กทม. ฝากไว้ที่ สภ.ลาดกระบัง โทร 081-234-5678" style="min-height:140px;resize:vertical"></textarea>
+    <label class="f" for="paste-url">ลิงก์โพสต์ต้นทาง (ไม่บังคับ)</label>
+    <input class="inp" id="paste-url" inputmode="url" placeholder="https://www.facebook.com/…">
+    <p class="small">ควรขออนุญาตคนโพสต์ก่อน เช่น คอมเมนต์ว่า “ขอลงเว็บป้ายลอยน้ำให้นะครับ”</p>
+    <div class="status" id="paste-status"></div>
+    <button type="button" class="btn" id="paste-go">แยกข้อมูล แล้วไปตรวจ</button>
+  </div>
+  <button class="x" id="paste-close">ยกเลิก</button>
+</dialog>
 
 <dialog id="saved" aria-labelledby="saved-h">
   <div class="sheet">
@@ -423,7 +439,11 @@ function route(){
 const onEnter = {
   home: () => renderTracked(),
   find: () => { current.key = null; runSearch(); if (!digits($("s-num").value)) setTimeout(() => $("s-num").focus(), 250); },
-  r3: () => { if (!foundPos && !gpsBusy) grabGps(); },
+  // มาจากโพสต์: คนกรอกไม่ได้อยู่ที่จุดเจอ จึงไม่ปักพิกัดอัตโนมัติ
+  r3: () => {
+    if (fromPost){ if (!foundPos) $("gps-sub").textContent = "มาจากโพสต์: ไม่ต้องปักพิกัด ใช้จุดที่บอกในโพสต์ด้านล่าง"; return; }
+    if (!foundPos && !gpsBusy) grabGps();
+  },
   done: () => {
     const p = lastDone;
     $("done-plate").innerHTML = plateHtml(p.prefix, p.number, p.province, "lg");
@@ -508,7 +528,7 @@ function cardHtml(p, qp){
     <div class="foot">
       ${navUrl && !returned ? `<a class="btn" href="${navUrl}" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4.5 20.3l.7.7L12 18l6.8 3 .7-.7z"/></svg>นำทางไปรับป้าย</a>` : ""}
       ${returned ? "" : contactHtml(p)}
-      <div class="acts">${map}${returned ? "" : `<button data-done="${esc(p.id)}">✓ ได้คืนแล้ว</button>`}</div>
+      <div class="acts">${map}${p.sourceUrl && /^https:\/\//.test(p.sourceUrl) ? `<a href="${esc(p.sourceUrl)}" target="_blank" rel="noopener nofollow">↗ โพสต์ต้นทาง</a>` : ""}${returned ? "" : `<button data-done="${esc(p.id)}">✓ ได้คืนแล้ว</button>`}</div>
     </div></article>`;
 }
 
@@ -694,17 +714,77 @@ async function onPhoto(e){
   try { photoDataUrl = await compress(f); }
   catch { alert("เปิดรูปนี้ไม่ได้ ลองถ่ายใหม่"); return; }
   $("r-preview").src = photoDataUrl; $("r-preview").classList.remove("hidden");
+  $("r2-photo").classList.add("hidden");
   location.hash = "#report/2";
+  if (fromPost) return;
   setStatus($("ocr-status"), "ดูรูปแล้วพิมพ์เลขทะเบียนให้ตรง"); setTimeout(() => $("r-num").focus(), 250);
   if (!foundPos) grabGps(true);
 }
-$("photo").addEventListener("change", onPhoto);
-$("photo2").addEventListener("change", onPhoto);
+$("photo").addEventListener("change", e => { fromPost = false; onPhoto(e); });
+$("photo2").addEventListener("change", e => { fromPost = false; onPhoto(e); });
 $("skip-photo").onclick = () => {
-  photoDataUrl = null; $("r-preview").classList.add("hidden");
+  photoDataUrl = null; fromPost = false; sourceUrl = ""; $("r-preview").classList.add("hidden");
   setStatus($("ocr-status"), "พิมพ์เลขทะเบียนตามป้ายที่เจอ");
   location.hash = "#report/2"; setTimeout(() => $("r-num").focus(), 250);
 };
+
+/* ---------- วางข้อความจากโพสต์: แยกข้อมูลด้วย logic ล้วน แล้วให้คนตรวจก่อนส่ง ---------- */
+const PROVINCE_ALIAS = { "กทม":"กรุงเทพมหานคร", "กรุงเทพ":"กรุงเทพมหานคร", "โคราช":"นครราชสีมา", "อยุธยา":"พระนครศรีอยุธยา",
+  "นครศรี":"นครศรีธรรมราช", "สุราษ":"สุราษฎร์ธานี", "ประจวบ":"ประจวบคีรีขันธ์", "ปากน้ำ":"สมุทรปราการ" };
+function parsePost(raw){
+  const text = String(raw||"").replace(/[๐-๙]/g, d => "๐๑๒๓๔๕๖๗๘๙".indexOf(d));
+  const out = {};
+  // ป้ายไทย: [เลขนำ]หมวดอักษร 1-3 ตัว ตามด้วยเลข 1-4 หลัก เช่น 1กข 1234, กข-1234, ฒฒ1234
+  // เลือกตัวที่น่าจะเป็นป้ายที่สุด: เลข 4 หลัก หรือมีเลขนำหน้าหมวดได้คะแนน คำอย่าง "ซอย 15" ถูกตัดทิ้ง
+  const STOP = /^(ซอย|ซ|ถนน|ถ|ม|ต|อ|จ|ชม|นท|ปี|บ|ห้อง|ตึก|ชั้น)$/;
+  const cands = [...text.matchAll(/(?<![ก-๙0-9a-z])(\d?\s?[ก-ฮ]{1,3})\s*[-–.]?\s*(\d{1,4})(?!\d)/g)]
+    .map(m => ({ prefix: m[1].replace(/\s/g,""), number: m[2] }))
+    .filter(c => !STOP.test(c.prefix.replace(/^\d/,"")))
+    .map(c => ({ ...c, s: (c.number.length === 4 ? 2 : 0) + (/^\d/.test(c.prefix) ? 1 : 0) + (c.prefix.replace(/^\d/,"").length === 2 ? 1 : 0) }))
+    .sort((a,b) => b.s - a.s);
+  if (cands[0]){ out.prefix = cands[0].prefix; out.number = cands[0].number; }
+  // จังหวัด: ชื่อเต็มก่อน (ยาวสุดก่อน กันชื่อซ้อน) แล้วค่อยชื่อย่อ
+  out.province = [...PROVINCES].sort((a,b) => b.length - a.length).find(p => text.includes(p))
+    || Object.entries(PROVINCE_ALIAS).find(([k]) => text.includes(k))?.[1] || "";
+  // เบอร์มือถือ/บ้าน หรือไอดีไลน์
+  const phone = text.match(/0\d{1,2}[-\s.]?\d{3}[-\s.]?\d{3,4}/);
+  const line = text.match(/(?:line|ไลน์|ไอดี)\s*(?:id)?\s*[:：]?\s*@?([a-z0-9._-]{3,30})/i);
+  out.contact = phone ? phone[0].replace(/[\s.]/g,"-") : line ? "LINE: " + line[1] : "";
+  // จุดรับคืน
+  const station = text.match(/(สภ\.?\s?[ก-๙a-z]+|สน\.?\s?[ก-๙a-z]+|สถานีตำรวจ[ก-๙\s]{0,30}|ป้อมตำรวจ[ก-๙\s]{0,30})/i);
+  const rescue = text.match(/((?:มูลนิธิ|กู้ภัย|เต็นท์|ศูนย์พักพิง)[ก-๙\s]{0,30})/);
+  const office = text.match(/((?:สำนักงานเขต|เขต|อบต\.?|เทศบาล)[ก-๙\s]{0,30})/);
+  if (station){ out.pickupType = "สถานีตำรวจ"; out.pickupPlace = station[1].trim(); }
+  else if (rescue){ out.pickupType = "จุดกู้ภัย"; out.pickupPlace = rescue[1].trim(); }
+  else if (office){ out.pickupType = "สำนักงานเขต/อบต."; out.pickupPlace = office[1].trim(); }
+  else if (out.contact){ out.pickupType = "ถือไว้เอง"; }
+  out.note = ("จากโพสต์: " + text.replace(/\s+/g," ").trim()).slice(0,200);
+  return out;
+}
+let fromPost = false, sourceUrl = "";
+$("paste-btn").onclick = () => { setStatus($("paste-status"), ""); $("paste").showModal(); setTimeout(() => $("paste-text").focus(), 100); };
+$("paste-close").onclick = () => $("paste").close();
+$("paste-go").onclick = () => {
+  const p = parsePost($("paste-text").value);
+  if (!p.number){ setStatus($("paste-status"), "หาเลขทะเบียนในข้อความไม่เจอ ลองวางข้อความที่มีเลขป้าย หรือกดยกเลิกแล้วพิมพ์เอง", "bad"); return; }
+  const url = $("paste-url").value.trim();
+  sourceUrl = /^https:\/\/\S{8,290}$/.test(url) ? url : "";
+  fromPost = true;
+  // ล้างจุดรับของโพสต์ก่อนหน้า กันข้อมูลค้างข้ามโพสต์
+  pickupType = null; pickupPos = null; $("r-place").value = ""; $("r-contact").value = "";
+  $("pickup-opts").querySelectorAll(".opt").forEach(x => x.setAttribute("aria-checked", "false"));
+  $("pickup-more").classList.add("hidden"); setStatus($("pk-status"), "ไม่ปักก็ได้ เจ้าของจะนำทางด้วยชื่อสถานที่");
+  $("r-prefix").value = p.prefix.slice(0,4); $("r-num").value = p.number; $("r-prov").value = p.province;
+  $("r-found").value = p.note;
+  if (p.pickupType) document.querySelector(`.opt[data-v="${p.pickupType}"]`)?.click();
+  if (p.pickupPlace) $("r-place").value = p.pickupPlace.slice(0,200);
+  if (p.contact) $("r-contact").value = p.contact.slice(0,80);
+  photoDataUrl = null; $("r-preview").classList.add("hidden"); $("r2-photo").classList.remove("hidden");
+  $("paste").close();
+  setStatus($("ocr-status"), "✓ แยกข้อมูลจากโพสต์แล้ว ตรวจเลขให้ตรงกับรูปในโพสต์", "good");
+  location.hash = "#report/2";
+};
+$("photo3").addEventListener("change", onPhoto);
 
 $("r2-next").onclick = () => {
   if (!digits($("r-num").value)){ setStatus($("ocr-status"), "ใส่เลขทะเบียนก่อน อย่างน้อยตัวเลข", "bad"); $("r-num").focus(); return; }
@@ -770,6 +850,7 @@ $("submit-btn").onclick = async () => {
     contact: $("r-contact").value.trim().slice(0,80),
     status: "waiting", createdAt: Date.now(), uid: auth.currentUser.uid
   };
+  if (sourceUrl) data.sourceUrl = sourceUrl;
   try{
     const ref = doc(plateCol);
     if (photoDataUrl) await setDoc(doc(fs, "photos", ref.id), { dataUrl: photoDataUrl });
@@ -784,7 +865,8 @@ $("submit-btn").onclick = async () => {
 // เก็บจุดรับไว้ใช้ต่อ (อาสาที่แจ้งหลายป้ายมักฝากที่เดียวกัน)
 function resetReport(){
   ["r-prefix","r-num","r-prov","r-found"].forEach(id => $(id).value = "");
-  photoDataUrl = null; foundPos = null;
+  photoDataUrl = null; foundPos = null; fromPost = false; sourceUrl = "";
+  $("paste-text").value = ""; $("paste-url").value = ""; $("r2-photo").classList.add("hidden");
   $("r-preview").classList.add("hidden"); setStatus($("ocr-status"), "");
   $("gps-btn").classList.remove("ok"); $("gps-title").textContent = "ใช้ตำแหน่งตอนนี้"; $("gps-sub").textContent = "แตะเพื่อปักพิกัดจุดที่เจอ";
   $("submit-status").classList.add("hidden");

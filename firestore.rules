@@ -7,7 +7,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['prefix','number','numberKey','province','lat','lng',
-             'pickupLat','pickupLng','foundNote','pickupType','pickupPlace','contact','status','createdAt','uid'])
+             'pickupLat','pickupLng','foundNote','pickupType','pickupPlace','contact','status','createdAt','uid','sourceUrl'])
+        && (!('sourceUrl' in request.resource.data)
+            || (request.resource.data.sourceUrl is string
+                && request.resource.data.sourceUrl.size() <= 300
+                && request.resource.data.sourceUrl.matches('^https://[^\\s]+$')))
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.number is string
         && request.resource.data.number.matches('^[0-9]{1,4}$')
