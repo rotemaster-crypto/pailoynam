@@ -60,6 +60,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ขอรับแจ้งเตือน: id = "<เลข>_<token>" / ห้ามอ่าน (token เป็นความลับ) / Cloud Function อ่านด้วยสิทธิ์ admin
+    match /subs/{id} {
+      allow read: if false;
+      allow create, update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['token','numberKey','createdAt'])
+        && request.resource.data.numberKey is string
+        && request.resource.data.numberKey.matches('^[0-9]{1,4}$')
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 20 && request.resource.data.token.size() < 400
+        && id == request.resource.data.numberKey + '_' + request.resource.data.token
+        && request.resource.data.createdAt is int;
+      allow delete: if request.auth != null;
+    }
+
     // รูปป้าย (ย่อแล้ว เก็บเป็นข้อความ ไม่ต้องใช้ Storage)
     match /photos/{id} {
       allow get: if true;

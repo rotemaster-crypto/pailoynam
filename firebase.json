@@ -4,5 +4,6 @@
     "ignore": ["firebase.json", "**/.*"],
     "headers": [{ "source": "**", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }]
   },
-  "firestore": { "rules": "firestore.rules", "indexes": "firestore.indexes.json" }
+  "firestore": { "rules": "firestore.rules", "indexes": "firestore.indexes.json" },
+  "functions": { "source": "functions", "runtime": "nodejs22" }
 }

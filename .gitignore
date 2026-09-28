@@ -2,3 +2,4 @@ node_modules/
 .firebase/
 *-debug.log
 *service-account*.json
+functions/node_modules/

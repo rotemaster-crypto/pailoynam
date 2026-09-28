@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ป้ายลอยน้ำ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="description" content="ตามหาป้ายทะเบียนรถที่หลุดหายช่วงน้ำท่วม คนเจอถ่ายรูปแจ้ง เจ้าของค้นด้วยเลขทะเบียนแล้วนำทางไปรับได้ทันที ฟรี ไม่ต้องสมัคร">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ป้ายลอยน้ำ">
@@ -78,6 +81,7 @@ a{color:var(--accent)}
 .btn.rescue{background:var(--accent);color:var(--accent-ink)}
 .btn.line{background:#06C755;color:#fff}
 .btn.fb{background:#1877F2;color:#fff}
+.ios-hint{margin-top:10px;padding:12px 14px;border-radius:var(--r);background:var(--accent-soft);font-size:.85rem;color:var(--ink)}
 .btn.text{background:transparent;color:var(--accent);min-height:40px;padding:6px}
 .btn.sm{min-height:44px;font-size:.9rem;font-weight:500}
 .btn:disabled{opacity:.4;cursor:not-allowed}
@@ -377,13 +381,11 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
 <dialog id="saved" aria-labelledby="saved-h">
   <div class="sheet">
     <h2 id="saved-h">ฝากตามหาแล้ว</h2>
-    <p>เปิดเว็บนี้ครั้งหน้า จะเห็นสถานะที่หน้าแรกทันที ถ้ามีคนแจ้งเลขนี้จะขึ้นว่า <b>“เจอแล้ว”</b></p>
-    <p><b>ส่งลิงก์เข้าไลน์ตัวเองไว้</b> จะได้กดเช็กได้ตลอด ไม่หายแม้เปลี่ยนเครื่อง</p>
-    <button type="button" class="btn line" id="saved-line">ส่งลิงก์เข้า LINE ตัวเอง</button>
-    <p class="small" style="margin:6px 0 4px">ใน LINE แตะ “Keep Memo” (อยู่บนสุดของรายชื่อ)</p>
-    <button type="button" class="btn fb" id="saved-fb">แชร์ประกาศไป Facebook</button>
-    <button type="button" class="btn alt" id="saved-copy">คัดลอกลิงก์</button>
+    <p>เปิดเว็บนี้ครั้งหน้าจะเห็นสถานะที่หน้าแรกทันที หรือกลับมาค้นเลขนี้ใหม่ได้ตลอด</p>
+    <button type="button" class="btn" id="notify-btn">เปิดแจ้งเตือนเมื่อมีคนเจอ</button>
+    <div class="ios-hint hidden" id="ios-hint"><b>iPhone:</b> แตะปุ่มแชร์ของ Safari → “เพิ่มไปยังหน้าจอโฮม” แล้วเปิดเว็บจากไอคอนนั้น จะกดเปิดแจ้งเตือนได้</div>
     <div class="status" id="saved-status"></div>
+    <button type="button" class="btn fb" id="saved-fb">แชร์ประกาศไป Facebook</button>
   </div>
   <button class="x" id="saved-close">ปิด</button>
 </dialog>
@@ -396,12 +398,13 @@ const firebaseConfig = {
   "authDomain": "pailoynam.firebaseapp.com",
   "projectId": "pailoynam",
   "storageBucket": "pailoynam.firebasestorage.app",
-  "appId": "1:1055762038842:web:4eaebda5a8954abc0df503"
+  "appId": "1:1055762038842:web:4eaebda5a8954abc0df503",
+  "messagingSenderId": "1055762038842"
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, onSnapshot, query, where, orderBy, limit }
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit }
   from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -781,7 +784,7 @@ function renderTracked(){
     newOnes.forEach(r => { if (!alerted.has(r.id)){ alerted.add(r.id); navigator.vibrate?.([200,100,200]); } });
     const state = !rows ? `<span class="spin"></span>กำลังเช็ก…`
       : waiting.length ? `<b class="hit">เจอแล้ว ${waiting.length} รายการ${newOnes.length ? " · ใหม่!" : ""}</b><br>แตะเพื่อดูและนำทาง`
-      : "ยังไม่มีคนแจ้ง<br>ระบบเฝ้าให้อยู่";
+      : "ยังไม่มีคนแจ้ง<br>ระบบเฝ้าให้อยู่" + (t.token ? " · แจ้งเตือนเปิดอยู่" : "");
     return `<div class="trk ${waiting.length ? "found" : ""}">
       <button class="trk-open" data-open="${esc(t.n)}">${plateHtml(t.p, t.n, t.v || "ทุกจังหวัด")}<span>${state}</span></button>
       <button class="trk-x" data-untrack="${esc(t.n)}" aria-label="เลิกตามหาเลข ${esc(t.n)}">✕</button></div>`;
@@ -794,6 +797,7 @@ $("tracked").addEventListener("click", e => {
     const t = tracked.all().find(t => t.n === x.dataset.untrack);
     if (!confirm(t?.lostId ? "เลิกตามหาและปิดประกาศเลขนี้?" : "เลิกตามหาเลขนี้?")) return;
     if (t?.lostId) updateDoc(doc(lostCol, t.lostId), { status: "closed", closedAt: Date.now() }).catch(() => {});
+    if (t?.token) deleteDoc(doc(fs, "subs", t.n + "_" + t.token)).catch(() => {});
     tracked.remove(x.dataset.untrack); syncTracking(); return;
   }
   const o = e.target.closest("[data-open]");
@@ -801,16 +805,47 @@ $("tracked").addEventListener("click", e => {
 });
 
 function openSaved(t){
-  const url = trackLink(t);
-  const msg = `ตามหาป้ายทะเบียน ${t.p||""} ${t.n} ${t.v||""}\nกดเช็กว่ามีคนเจอหรือยัง: ${url}`;
   setStatus($("saved-status"), "");
-  $("saved-line").onclick = () => shareToLine(msg, url);
-  $("saved-copy").onclick = () => copyText(url, $("saved-status"));
-  // ประกาศสาธารณะใช้ลิงก์ค้นหา (?q=) ไม่ใช้ลิงก์ติดตาม กันคนอื่นเปิดแล้วฝากตามหาแทนเจ้าของ
+  renderNotifyBtn(t);
+  $("notify-btn").onclick = () => enableNotify(t.n);
   const publicUrl = siteUrl() + "?q=" + t.n;
   $("saved-fb").onclick = () => shareToFacebook(publicUrl,
     `🔎 ตามหาป้ายทะเบียน ${t.p||""} ${t.n} ${t.v||""} หลุดหายช่วงน้ำท่วม ใครเก็บได้ช่วยแจ้งที่ ${publicUrl} ขอบคุณครับ 🙏`, $("saved-status"));
   $("saved").showModal();
+}
+
+/* ---------- แจ้งเตือนเมื่อมีคนเจอ (Firebase Cloud Messaging) ---------- */
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isStandalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function renderNotifyBtn(t){
+  const on = !!tracked.all().find(x => x.n === t.n)?.token;
+  const needsHome = isIOS && !isStandalone;
+  $("notify-btn").textContent = on ? "✓ เปิดแจ้งเตือนแล้ว" : "เปิดแจ้งเตือนเมื่อมีคนเจอ";
+  $("notify-btn").disabled = on || needsHome;
+  $("notify-btn").classList.toggle("alt", on);
+  $("ios-hint").classList.toggle("hidden", on || !needsHome);
+}
+async function enableNotify(n){
+  const st = $("saved-status");
+  if (!("Notification" in window) || !("serviceWorker" in navigator))
+    return setStatus(st, "เบราว์เซอร์นี้ไม่รองรับแจ้งเตือน กลับมาค้นเลขนี้ใหม่ได้ตลอด", "bad");
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return setStatus(st, "ยังไม่ได้อนุญาตแจ้งเตือน เปิดได้ในตั้งค่าของเบราว์เซอร์", "bad");
+  $("notify-btn").disabled = true; setStatus(st, `<span class="spin"></span>กำลังเปิดแจ้งเตือน…`);
+  try{
+    const { getMessaging, getToken, isSupported } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-messaging.js");
+    if (!(await isSupported())) throw new Error("unsupported");
+    const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    const token = await getToken(getMessaging(app), { serviceWorkerRegistration: reg });
+    await setDoc(doc(fs, "subs", n + "_" + token), { token, numberKey: n, createdAt: Date.now() });
+    const list = tracked.all(), t = list.find(x => x.n === n);
+    if (t){ t.token = token; tracked.save(list); }
+    renderNotifyBtn({ n }); renderTracked();
+    setStatus(st, "✓ มีคนแจ้งเลขนี้เมื่อไหร่ มือถือจะเด้งแจ้งเตือนทันที", "good");
+  }catch{
+    $("notify-btn").disabled = false;
+    setStatus(st, "เปิดแจ้งเตือนไม่สำเร็จ ลองอีกครั้ง หรือกลับมาค้นเลขนี้ใหม่ได้ตลอด", "bad");
+  }
 }
 $("saved-close").onclick = () => $("saved").close();
 const searchTrack = () => ({ n: digits($("s-num").value), p: normPrefix($("s-prefix").value).slice(0,4), v: $("s-prov").value.trim().slice(0,40) });
