@@ -8,6 +8,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ป้ายลอยน้ำ">
 <meta name="description" content="ตามหาป้ายทะเบียนรถที่หลุดหายช่วงน้ำท่วม คนเจอถ่ายรูปแจ้ง เจ้าของค้นด้วยเลขทะเบียนแล้วนำทางไปรับได้ทันที ฟรี ไม่ต้องสมัคร">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ป้ายลอยน้ำ">
+<meta property="og:title" content="ป้ายลอยน้ำ — ตามหาป้ายทะเบียนที่หลุดหายช่วงน้ำท่วม">
+<meta property="og:description" content="พิมพ์เลขทะเบียนค้นได้ทันที เจอแล้วกดนำทางไปรับ ใครเก็บป้ายได้แจ้งได้ใน 1 นาที ฟรี ไม่ต้องสมัคร">
+<meta property="og:url" content="https://pailoynam.web.app/">
+<meta property="og:locale" content="th_TH">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>">
 <title>ป้ายลอยน้ำ — ตามหาป้ายทะเบียนที่หลุดหายช่วงน้ำท่วม</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -71,6 +77,7 @@ a{color:var(--accent)}
 .btn.alt{background:var(--surface);color:var(--ink);border-color:var(--line-2)}
 .btn.rescue{background:var(--accent);color:var(--accent-ink)}
 .btn.line{background:#06C755;color:#fff}
+.btn.fb{background:#1877F2;color:#fff}
 .btn.text{background:transparent;color:var(--accent);min-height:40px;padding:6px}
 .btn.sm{min-height:44px;font-size:.9rem;font-weight:500}
 .btn:disabled{opacity:.4;cursor:not-allowed}
@@ -321,7 +328,10 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <div id="done-owners" class="hidden" style="margin-top:16px"></div>
     <div class="grow"></div>
     <div class="bar">
-      <button type="button" class="btn line" id="done-line">แชร์เข้ากลุ่ม LINE</button>
+      <div class="row2">
+        <button type="button" class="btn line" id="done-line">แชร์เข้า LINE</button>
+        <button type="button" class="btn fb" id="done-fb">แชร์ไป Facebook</button>
+      </div>
       <div class="row2">
         <a class="btn alt sm" href="#report/1">แจ้งป้ายถัดไป</a>
         <a class="btn alt sm" href="#">กลับหน้าแรก</a>
@@ -369,9 +379,10 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <h2 id="saved-h">ฝากตามหาแล้ว</h2>
     <p>เปิดเว็บนี้ครั้งหน้า จะเห็นสถานะที่หน้าแรกทันที ถ้ามีคนแจ้งเลขนี้จะขึ้นว่า <b>“เจอแล้ว”</b></p>
     <p><b>ส่งลิงก์เข้าไลน์ตัวเองไว้</b> จะได้กดเช็กได้ตลอด ไม่หายแม้เปลี่ยนเครื่อง</p>
-    <button type="button" class="btn line" id="saved-line">ส่งลิงก์เข้า LINE</button>
+    <button type="button" class="btn line" id="saved-line">ส่งลิงก์เข้า LINE ตัวเอง</button>
+    <p class="small" style="margin:6px 0 4px">ใน LINE แตะ “Keep Memo” (อยู่บนสุดของรายชื่อ)</p>
+    <button type="button" class="btn fb" id="saved-fb">แชร์ประกาศไป Facebook</button>
     <button type="button" class="btn alt" id="saved-copy">คัดลอกลิงก์</button>
-    <p class="small">ส่งเข้าตัวเอง: ใน LINE เลือก “Keep Memo” ในรายชื่อ</p>
     <div class="status" id="saved-status"></div>
   </div>
   <button class="x" id="saved-close">ปิด</button>
@@ -448,6 +459,11 @@ async function shareToLine(text, url){
   }
   window.open("https://social-plugins.line.me/lineit/share?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text), "_blank", "noopener");
 }
+/* Facebook ไม่ให้เว็บเติมข้อความในโพสต์ จึงคัดลอกข้อความไว้ให้ก่อน วางในโพสต์ได้เลย */
+async function shareToFacebook(url, text, statusEl){
+  try { await navigator.clipboard.writeText(text); if (statusEl) setStatus(statusEl, "✓ คัดลอกข้อความไว้แล้ว วางในโพสต์ Facebook ได้เลย", "good"); } catch {}
+  window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank", "noopener");
+}
 async function copyText(text, statusEl){
   try { await navigator.clipboard.writeText(text); setStatus(statusEl, "✓ คัดลอกลิงก์แล้ว", "good"); }
   catch {
@@ -519,7 +535,9 @@ const onEnter = {
     $("done-plate").innerHTML = plateHtml(p.prefix, p.number, p.province, "lg");
     showOwners(p.number);
     const shareUrl = siteUrl() + "?q=" + p.number;
-    $("done-line").onclick = () => shareToLine(`📢 มีคนเก็บป้ายทะเบียน ${p.prefix} ${p.number} ${p.province} ได้ เจ้าของดูรูปและนำทางไปรับได้ที่ ${shareUrl}`, shareUrl);
+    const doneMsg = `📢 มีคนเก็บป้ายทะเบียน ${p.prefix} ${p.number} ${p.province} ได้ เจ้าของดูรูปและนำทางไปรับได้ที่ ${shareUrl}`;
+    $("done-line").onclick = () => shareToLine(doneMsg, shareUrl);
+    $("done-fb").onclick = () => shareToFacebook(shareUrl, doneMsg);
   }
 };
 async function showOwners(n){
@@ -788,6 +806,10 @@ function openSaved(t){
   setStatus($("saved-status"), "");
   $("saved-line").onclick = () => shareToLine(msg, url);
   $("saved-copy").onclick = () => copyText(url, $("saved-status"));
+  // ประกาศสาธารณะใช้ลิงก์ค้นหา (?q=) ไม่ใช้ลิงก์ติดตาม กันคนอื่นเปิดแล้วฝากตามหาแทนเจ้าของ
+  const publicUrl = siteUrl() + "?q=" + t.n;
+  $("saved-fb").onclick = () => shareToFacebook(publicUrl,
+    `🔎 ตามหาป้ายทะเบียน ${t.p||""} ${t.n} ${t.v||""} หลุดหายช่วงน้ำท่วม ใครเก็บได้ช่วยแจ้งที่ ${publicUrl} ขอบคุณครับ 🙏`, $("saved-status"));
   $("saved").showModal();
 }
 $("saved-close").onclick = () => $("saved").close();
