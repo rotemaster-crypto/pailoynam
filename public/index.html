@@ -118,6 +118,9 @@ header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:1
 .plate input{border:0;background:transparent;font-weight:700;color:var(--plate-ink);text-align:center;padding:0;min-width:0;font-variant-numeric:tabular-nums}
 .plate input::placeholder{color:#C4C9D0;font-weight:600}
 .plate input:focus{outline:none}
+.plate .p-one{display:block;width:100%;font-size:2.2rem;letter-spacing:.02em}
+.parsed{font-size:.8rem;color:var(--muted);margin:6px 2px 0;min-height:1.2em}
+.parsed b{color:var(--ink)}
 .plate .p-prefix{font-size:2rem;width:4.2ch}
 .plate .p-num{font-size:2.5rem;width:4.4ch;letter-spacing:.02em}
 .plate .p-prov{display:block;width:100%;font-size:.95rem;font-weight:500;border-top:1px solid var(--line);padding-top:6px;margin-top:4px}
@@ -197,13 +200,13 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
   @keyframes in{from{opacity:0}to{opacity:1}}
 }
 @media (max-width:360px){
-  .plate .p-prefix{font-size:1.7rem}.plate .p-num{font-size:2.1rem}
+  .plate .p-one{font-size:1.9rem}
   .card .top{grid-template-columns:84px 1fr}.card .thumb img{width:84px;height:84px}
 }
 /* จอเตี้ย (มือถือเล็ก): บีบระยะให้ยังพอดีหน้าจอเดียว */
 @media (max-height:700px){
   .q{font-size:1.15rem}.sub{margin-bottom:10px}
-  .plate .p-num{font-size:2.1rem}.plate .p-prefix{font-size:1.7rem}
+  .plate .p-one{font-size:1.9rem}
   label.f{margin-top:10px}
   .opt{min-height:48px}
   .camera{min-height:140px}
@@ -232,13 +235,12 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <div class="panel hidden" id="tracked" style="margin-bottom:16px"></div>
 
     <div class="plate" aria-label="ป้อนเลขทะเบียนที่ต้องการค้นหา">
-      <div class="plate-row">
-        <input class="p-prefix" id="s-prefix" placeholder="กข" maxlength="4" autocomplete="off" enterkeyhint="search" aria-label="หมวดอักษร (ไม่บังคับ)">
-        <input class="p-num" id="s-num" placeholder="1234" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" enterkeyhint="search" aria-label="เลขทะเบียน">
-      </div>
+      <input class="p-one" id="s-plate" placeholder="เช่น 1กข 1234" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="เลขทะเบียน พิมพ์รวมกันได้ เช่น 1กข 1234">
+      <input type="hidden" id="s-prefix"><input type="hidden" id="s-num">
       <input class="p-prov" id="s-prov" list="provinces" placeholder="จังหวัด (ไม่บังคับ)" enterkeyhint="search" aria-label="จังหวัด">
     </div>
-    <p class="hint">พิมพ์แค่เลข 4 หลัก ค้นได้ทั้งป้ายที่มีคนเจอ และคนที่กำลังตามหาป้าย</p>
+    <div class="parsed" id="s-parsed"></div>
+    <p class="hint">พิมพ์รวมกันได้เลย เช่น 1กข 1234 หรือแค่ 1234 ค้นได้ทั้งป้ายที่มีคนเจอ และคนที่กำลังตามหา</p>
     <div id="find-bar" class="hidden" style="margin-top:12px">
       <button type="button" class="btn" id="save-btn">ประกาศป้ายหาย / ฝากตามหาเลขนี้</button>
       <button type="button" class="btn alt hidden" id="saved-btn">✓ กำลังตามหาอยู่ · ส่งลิงก์เข้า LINE</button>
@@ -266,12 +268,11 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
   <main class="screen fit hidden" id="s-r1">
     <h2 class="q">เลขทะเบียนป้ายที่เจอ</h2>
     <div class="plate" style="margin-top:8px">
-      <div class="plate-row">
-        <input class="p-prefix" id="r-prefix" placeholder="กข" maxlength="4" aria-label="หมวดอักษร">
-        <input class="p-num" id="r-num" placeholder="1234" inputmode="numeric" pattern="[0-9]*" maxlength="4" aria-label="เลขทะเบียน">
-      </div>
+      <input class="p-one" id="r-plate" placeholder="เช่น 1กข 1234" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" aria-label="เลขทะเบียน พิมพ์รวมกันได้ เช่น 1กข 1234">
+      <input type="hidden" id="r-prefix"><input type="hidden" id="r-num">
       <input class="p-prov" id="r-prov" list="provinces" placeholder="จังหวัด" aria-label="จังหวัด">
     </div>
+    <div class="parsed" id="r-parsed"></div>
     <div class="owner-hint hidden" id="owner-hint"></div>
 
     <label class="f">รูปป้าย (ไม่บังคับ แต่ช่วยให้เจ้าของมั่นใจ)</label>
@@ -404,6 +405,35 @@ $("provinces").innerHTML = PROVINCES.map(p=>`<option value="${p}">`).join("");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const digits = s => String(s||"").replace(/[^0-9๐-๙]/g,"").replace(/[๐-๙]/g, d => "๐๑๒๓๔๕๖๗๘๙".indexOf(d));
 const normPrefix = s => String(s||"").replace(/\s/g,"");
+/* แยกเลขทะเบียนที่พิมพ์รวมกัน: "1กข 1234", "กข-1234", "๑กข๑๒๓๔", "1234 กทม" → หมวด / เลข / จังหวัด */
+const PROVINCE_ALIAS = { "กทม":"กรุงเทพมหานคร", "กรุงเทพ":"กรุงเทพมหานคร", "โคราช":"นครราชสีมา", "อยุธยา":"พระนครศรีอยุธยา",
+  "นครศรี":"นครศรีธรรมราช", "สุราษ":"สุราษฎร์ธานี", "ประจวบ":"ประจวบคีรีขันธ์", "ปากน้ำ":"สมุทรปราการ" };
+function parsePlate(raw){
+  const t = String(raw||"").replace(/[๐-๙]/g, d => "๐๑๒๓๔๕๖๗๘๙".indexOf(d));
+  const m = t.match(/^\s*(\d?\s*[ก-ฮ]{1,3})?\s*[-–.]?\s*(\d{1,4})?([\s\S]*)$/);
+  const rest = (m[3] || "").trim();
+  const province = rest ? ([...PROVINCES].sort((a,b) => b.length - a.length).find(p => rest.includes(p))
+    || Object.entries(PROVINCE_ALIAS).find(([k]) => rest.includes(k))?.[1] || "") : "";
+  return { prefix: (m[1] || "").replace(/\s/g,"").slice(0,4), number: m[2] || "", province };
+}
+function showParsed(pre, p){
+  $(pre+"-parsed").innerHTML = (p.prefix || p.number)
+    ? `หมวด <b>${esc(p.prefix || "–")}</b> · เลข <b>${esc(p.number || "–")}</b>${p.province ? ` · <b>${esc(p.province)}</b>` : ""}` : "";
+}
+function bindPlate(pre){
+  $(pre+"-plate").addEventListener("input", e => {
+    const p = parsePlate(e.target.value);
+    $(pre+"-prefix").value = p.prefix; $(pre+"-num").value = p.number;
+    if (p.province) $(pre+"-prov").value = p.province;
+    showParsed(pre, p);
+  });
+}
+function setPlate(pre, prefix, number, province){
+  $(pre+"-prefix").value = prefix || ""; $(pre+"-num").value = number || "";
+  if (province != null) $(pre+"-prov").value = province;
+  $(pre+"-plate").value = [prefix, number].filter(Boolean).join(" ");
+  showParsed(pre, { prefix, number });
+}
 const setStatus = (el, msg, kind) => { el.innerHTML = msg || ""; el.className = "status" + (kind ? " "+kind : ""); };
 const plateHtml = (p, n, v, cls="") => `<span class="mini-plate ${cls}">${esc(p||"")} ${esc(n)}<small>${esc(v||"ไม่ทราบจังหวัด")}</small></span>`;
 const siteUrl = () => location.origin + location.pathname;
@@ -509,12 +539,12 @@ function runSearch(){
   }
   render(); renderLost();
 }
-["s-prefix","s-num","s-prov"].forEach(id => {
+bindPlate("s"); bindPlate("r");
+["s-plate","s-prov"].forEach(id => {
   $(id).addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 300); });
   $(id).addEventListener("keydown", e => { if (e.key === "Enter"){ e.target.blur(); runSearch(); } });
 });
 // พิมพ์เลขครบ 4 หลักแล้วเก็บคีย์บอร์ด ให้เห็นผลทันที
-$("s-num").addEventListener("input", e => { if (digits(e.target.value).length === 4) e.target.blur(); });
 
 function chipGroup(id, onPick){
   const g = $(id);
@@ -642,7 +672,7 @@ $("lost-results").addEventListener("click", e => {
   const f = e.target.closest("[data-ifound]");
   if (f){
     const l = current.lost.find(x => x.id === f.dataset.ifound); if (!l) return;
-    $("r-num").value = l.number; $("r-prefix").value = l.prefix || ""; $("r-prov").value = l.province || "";
+    setPlate("r", l.prefix, l.number, l.province || "");
     location.hash = "#report/1";
   }
 });
@@ -782,7 +812,7 @@ function openFromHash(){
   if (!n) return;
   const t = { n, p: normPrefix(q.get("p")).slice(0,4), v: (q.get("v")||"").slice(0,40) };
   if (!tracked.all().some(x => x.n === n)) { tracked.add(t); syncTracking(); }
-  $("s-num").value = t.n; $("s-prefix").value = t.p; $("s-prov").value = t.v;
+  setPlate("s", t.p, t.n, t.v);
 }
 
 /* ================= แจ้งป้าย (2 ขั้น: เลขป้าย+รูป → จุดรับ+หมุด) ================= */
@@ -824,10 +854,10 @@ async function checkOwners(){
     box.classList.toggle("hidden", !c);
   }catch{ box.classList.add("hidden"); }
 }
-$("r-num").addEventListener("input", () => { clearTimeout(ownerTimer); ownerTimer = setTimeout(checkOwners, 400); });
+$("r-plate").addEventListener("input", () => { clearTimeout(ownerTimer); ownerTimer = setTimeout(checkOwners, 400); });
 
 $("r1-next").onclick = () => {
-  if (!digits($("r-num").value)){ setStatus($("ocr-status"), "ใส่เลขทะเบียนก่อน อย่างน้อยตัวเลข", "bad"); $("r-num").focus(); return; }
+  if (!digits($("r-num").value)){ setStatus($("ocr-status"), "ใส่เลขทะเบียนก่อน อย่างน้อยตัวเลข", "bad"); $("r-plate").focus(); return; }
   location.hash = "#report/2";
 };
 
@@ -924,7 +954,7 @@ $("submit-btn").onclick = async () => {
 };
 // เก็บจุดรับ/หมุดไว้ใช้ต่อ (อาสาที่แจ้งหลายป้ายมักฝากที่เดียวกัน)
 function resetReport(){
-  ["r-prefix","r-num","r-prov"].forEach(id => $(id).value = "");
+  ["r-plate","r-prefix","r-num","r-prov"].forEach(id => $(id).value = ""); $("r-parsed").innerHTML = "";
   photoDataUrl = null;
   $("r-preview").classList.add("hidden"); setStatus($("ocr-status"), "");
   $("owner-hint").classList.add("hidden");
