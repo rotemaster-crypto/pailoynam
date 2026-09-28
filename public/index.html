@@ -68,6 +68,9 @@ button{touch-action:manipulation}
 .hero p{margin:4px 0 0;color:var(--muted)}
 .stat{display:inline-flex;align-items:baseline;gap:6px;margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 14px;font-size:.9rem;color:var(--muted)}
 .stat b{font-family:var(--plate-font);font-size:1.2rem;color:var(--water)}
+.stat.ok b{color:var(--ok)}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.stats .stat{margin-top:0}
 .big-choices{display:flex;flex-direction:column;gap:12px;margin-top:18px}
 .choice{display:flex;align-items:center;gap:16px;width:100%;text-align:left;border:0;border-radius:20px;padding:20px 18px;min-height:104px;cursor:pointer;background:var(--water);color:#fff;text-decoration:none;box-shadow:0 6px 16px -8px rgba(0,0,0,.35)}
 .choice.found{background:var(--rescue);color:#15191C}
@@ -187,7 +190,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <div class="hero">
       <h1>ป้ายทะเบียนหลุดหายช่วงน้ำท่วม?</h1>
       <p>คนเจอแจ้ง เจ้าของค้น แล้วนำทางไปรับได้ทันที ฟรี ไม่ต้องสมัคร</p>
-      <div class="stat"><b id="cnt">–</b> ป้ายรอเจ้าของอยู่</div>
+      <div class="stats" id="stats"><span class="stat">✓ ฟรี ไม่ต้องสมัคร</span><span class="stat">✓ ไม่เก็บข้อมูลเจ้าของ</span></div>
     </div>
 
     <div class="panel hidden" id="tracked" style="margin-top:16px"></div>
@@ -199,6 +202,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     </div>
     <p class="notice"><b>ระวังมิจฉาชีพ:</b> รับป้ายคืนไม่มีค่าใช้จ่าย อย่าโอนเงินให้ใคร นัดรับที่สถานีตำรวจหรือที่สาธารณะ และเตรียมเล่มทะเบียนหรือบัตรประชาชนไปยืนยันตัว</p>
     <details class="notice" style="margin-bottom:24px"><summary>หาป้ายไม่เจอ ทำยังไง</summary>ทำป้ายใหม่ได้ที่สำนักงานขนส่งโดยไม่ต้องแจ้งความ สายด่วนกรมการขนส่งทางบก 1584 ส่วนผู้ที่เก็บป้ายของคนอื่นได้ ฝากไว้ที่สถานีตำรวจใกล้บ้านได้</details>
+    <p class="small" style="text-align:center;margin:0 0 24px">ตำรวจ กู้ภัย หรือจุดรับฝากป้าย <a href="qr.html" style="color:var(--water);font-weight:600">พิมพ์ป้าย QR ไปติดที่จุดของคุณ</a></p>
   </main>
 
   <!-- ===== ค้นหา ===== -->
@@ -576,7 +580,10 @@ $("results").addEventListener("click", async e => {
   if (done){
     if (!confirm("ยืนยันว่าป้ายนี้คืนเจ้าของแล้ว?")) return;
     done.disabled = true;
-    try { await updateDoc(doc(fs,"plates",done.dataset.done), {status:"returned", returnedAt:Date.now()}); }
+    try {
+      await updateDoc(doc(fs,"plates",done.dataset.done), {status:"returned", returnedAt:Date.now()});
+      if (stats.waiting != null){ stats.waiting--; stats.returned++; renderStats(); }
+    }
     catch { done.disabled = false; alert("บันทึกไม่สำเร็จ ลองอีกครั้ง"); }
   }
 });
@@ -769,7 +776,7 @@ $("submit-btn").onclick = async () => {
     await setDoc(ref, data);
     lastDone = data;
     resetReport();
-    $("cnt").textContent = String((parseInt($("cnt").textContent.replace(/\D/g,"")) || 0) + 1);
+    stats.waiting++; renderStats();
     location.replace("#report/done");
   }catch{ setStatus(st, "ส่งไม่สำเร็จ ลองกดอีกครั้ง", "bad"); }
   finally{ $("submit-btn").disabled = false; }
@@ -783,13 +790,28 @@ function resetReport(){
   $("submit-status").classList.add("hidden");
 }
 
+/* ================= ตัวเลขหน้าแรก: ตัวเลขจริงจากฐานข้อมูลเท่านั้น ยังน้อยอยู่ก็ไม่โชว์ ================= */
+const SHOW_WAITING_FROM = 20;
+const stats = { waiting: null, returned: null };
+function renderStats(){
+  const fmt = n => n.toLocaleString("th-TH"), parts = [];
+  if (stats.waiting >= SHOW_WAITING_FROM) parts.push(`<span class="stat"><b>${fmt(stats.waiting)}</b> ป้ายรอเจ้าของ</span>`);
+  if (stats.returned > 0) parts.push(`<span class="stat ok"><b>${fmt(stats.returned)}</b> ป้ายคืนเจ้าของแล้ว</span>`);
+  if (!parts.length) parts.push(`<span class="stat">✓ ฟรี ไม่ต้องสมัคร</span>`, `<span class="stat">✓ ไม่เก็บข้อมูลเจ้าของ</span>`);
+  $("stats").innerHTML = parts.join("");
+}
+function loadStats(){
+  const count = status => getCountFromServer(query(plateCol, where("status","==",status))).then(s => s.data().count);
+  Promise.all([count("waiting"), count("returned")])
+    .then(([w, r]) => { stats.waiting = w; stats.returned = r; renderStats(); }).catch(() => {});
+}
+
 /* ================= เริ่มทำงาน ================= */
 route();
 signInAnonymously(auth).then(() => {
   ready = true; syncTracking();
   if (screen === "find") runSearch();
-  getCountFromServer(query(plateCol, where("status","==","waiting")))
-    .then(s => { $("cnt").textContent = s.data().count.toLocaleString("th-TH"); }).catch(() => {});
+  loadStats();
 }).catch(() => { setStatus($("find-status"), "เชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ตแล้วรีเฟรชหน้า", "bad"); });
 </script>
 </body>

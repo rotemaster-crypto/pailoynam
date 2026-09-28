@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0F5E78">
+<title>ป้าย QR ป้ายลอยน้ำ</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#EAF1F3; --surface:#FFFFFF; --ink:#15191C; --muted:#56646B; --water:#0F5E78; --rescue:#F2C230; --line:#C6D3D8;
+  --plate-font:"Chakra Petch","IBM Plex Sans Thai",system-ui,sans-serif;
+  --body-font:"IBM Plex Sans Thai","Noto Sans Thai",Tahoma,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0E1A1F; --surface:#15252C; --ink:#E9EEF0; --muted:#9FB0B7; --water:#5FB4CF; --line:#2B434C; }
+}
+:root[data-theme="dark"]{ --bg:#0E1A1F; --surface:#15252C; --ink:#E9EEF0; --muted:#9FB0B7; --water:#5FB4CF; --line:#2B434C; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body-font);line-height:1.5}
+button,input{font:inherit;color:inherit}
+
+/* ---------- ตัวควบคุม (ไม่พิมพ์) ---------- */
+.controls{max-width:560px;margin:0 auto;padding:16px}
+.controls h1{font-family:var(--plate-font);font-size:1.4rem;margin:0 0 4px}
+.controls p{margin:0 0 14px;color:var(--muted);font-size:.95rem}
+.controls a{color:var(--water)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px}
+.seg button{border:0;background:transparent;border-radius:10px;padding:10px 8px;min-height:48px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--water);color:#fff}
+label{display:block;font-weight:600;margin:14px 0 6px}
+.inp{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;min-height:50px;font-size:16px}
+.print{display:flex;align-items:center;justify-content:center;width:100%;margin-top:16px;border:0;border-radius:14px;min-height:56px;background:var(--rescue);color:#15191C;font-weight:700;font-size:1.1rem;cursor:pointer}
+.hint{font-size:.85rem;color:var(--muted);margin-top:8px}
+
+/* ---------- โปสเตอร์ (กระดาษขาวเสมอ) ---------- */
+.stage{padding:8px 16px 32px;display:flex;justify-content:center}
+.poster{width:100%;max-width:560px;aspect-ratio:210/297;background:#fff;color:#15191C;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.18);
+  display:flex;flex-direction:column;overflow:hidden;container-type:inline-size}
+.band{background:#F2C230;padding:5cqw 6cqw 4cqw;text-align:center}
+.band .brand{font-family:var(--plate-font);font-weight:700;font-size:4cqw;letter-spacing:.02em}
+.band h2{font-family:var(--plate-font);font-size:8.4cqw;line-height:1.15;margin:1cqw 0 0}
+.body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:4cqw;padding:5cqw 6cqw}
+.qr-row{display:flex;gap:5cqw;align-items:center}
+.qr-row.one{flex-direction:column;text-align:center}
+.qr{flex:none;width:34cqw;aspect-ratio:1;border:1cqw solid #15191C;border-radius:3cqw;padding:1.5cqw;background:#fff}
+.qr-row.one .qr{width:56cqw}
+.qr svg{display:block;width:100%;height:100%}
+.qr-text b{display:block;font-family:var(--plate-font);font-size:6cqw;line-height:1.2}
+.qr-text span{display:block;font-size:3.6cqw;color:#3A454B;margin-top:1cqw}
+.place{border:.6cqw dashed #15191C;border-radius:3cqw;padding:3cqw 4cqw;text-align:center}
+.place small{display:block;font-size:3.2cqw;color:#3A454B}
+.place b{display:block;font-family:var(--plate-font);font-size:5.6cqw;min-height:7cqw;line-height:1.3}
+.foot{background:#0F5E78;color:#fff;text-align:center;padding:3cqw 6cqw;font-size:3.4cqw}
+.foot b{font-family:var(--plate-font);font-size:4.4cqw;display:block}
+
+@media print{
+  @page{size:A4 portrait;margin:0}
+  body{background:#fff}
+  .controls{display:none}
+  .stage{padding:0}
+  .poster{max-width:none;width:210mm;height:297mm;aspect-ratio:auto;border-radius:0;box-shadow:none}
+  .band,.foot{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="controls">
+  <h1>ป้าย QR สำหรับจุดรับฝากป้าย</h1>
+  <p>พิมพ์ไปติดที่ป้อมตำรวจ เต็นท์กู้ภัย หรือจุดแจกของ คนเก็บป้ายได้สแกนแล้วแจ้งได้ทันที เจ้าของสแกนแล้วค้นได้ทันที · <a href="./">กลับหน้าเว็บ</a></p>
+  <div class="seg" role="group" aria-label="แบบป้าย">
+    <button type="button" aria-pressed="true" data-mode="both">2 QR: แจ้ง + ค้นหา</button>
+    <button type="button" aria-pressed="false" data-mode="report">QR แจ้งป้ายอย่างเดียว</button>
+  </div>
+  <label for="place">ชื่อจุดนี้ (ไม่บังคับ)</label>
+  <input class="inp" id="place" maxlength="60" placeholder="เช่น สภ.ลาดกระบัง หรือ เต็นท์กู้ภัยหน้าวัด…">
+  <button type="button" class="print" id="print">🖨️ พิมพ์ / บันทึกเป็น PDF</button>
+  <p class="hint">ขนาด A4 แนวตั้ง บนมือถือกดพิมพ์แล้วเลือก “บันทึกเป็น PDF” เพื่อส่งต่อทาง LINE ได้</p>
+</div>
+
+<div class="stage">
+  <article class="poster" id="poster">
+    <div class="band">
+      <div class="brand">ป้ายลอยน้ำ</div>
+      <h2 id="headline">ป้ายทะเบียนหาย / เก็บป้ายได้<br>สแกนตรงนี้</h2>
+    </div>
+    <div class="body" id="poster-body"></div>
+    <div class="foot"><b id="site-url"></b>ฟรี ไม่ต้องสมัคร ไม่ต้องลงแอป · รับป้ายคืนไม่มีค่าใช้จ่าย</div>
+  </article>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const base = new URL("./", location.href).href.replace(/\/$/, "");
+const URLS = { report: base + "/#report", find: base + "/" };
+
+function qrSvg(text){
+  if (typeof qrcode === "undefined") return `<div style="display:grid;place-items:center;height:100%;font-size:3cqw;text-align:center">${esc(text)}</div>`;
+  const q = qrcode(0, "M"); q.addData(text); q.make();
+  return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+}
+
+let mode = "both";
+function render(){
+  const place = $("place").value.trim();
+  const placeBox = place ? `<div class="place"><small>ฝาก/รับป้ายทะเบียนได้ที่</small><b>${esc(place)}</b></div>` : "";
+  $("headline").innerHTML = mode === "both" ? "ป้ายทะเบียนหาย / เก็บป้ายได้<br>สแกนตรงนี้" : "เก็บป้ายทะเบียนได้?<br>สแกนแจ้งเจ้าของ";
+  $("poster-body").innerHTML = mode === "both" ? `
+      <div class="qr-row">
+        <div class="qr">${qrSvg(URLS.report)}</div>
+        <div class="qr-text"><b>📷 เก็บป้ายได้</b><span>สแกน ถ่ายรูป แจ้งจุดรับคืน ใช้เวลาไม่ถึง 1 นาที</span></div>
+      </div>
+      <div class="qr-row">
+        <div class="qr">${qrSvg(URLS.find)}</div>
+        <div class="qr-text"><b>🔍 ป้ายรถหาย</b><span>สแกน พิมพ์เลขทะเบียน ถ้าเจอกดนำทางไปรับได้เลย</span></div>
+      </div>
+      ${placeBox}`
+    : `
+      <div class="qr-row one">
+        <div class="qr">${qrSvg(URLS.report)}</div>
+        <div class="qr-text"><b>📷 สแกน → ถ่ายรูป → แจ้ง</b><span>เจ้าของค้นเจอและนำทางมารับได้ทันที</span></div>
+      </div>
+      ${placeBox}`;
+  $("site-url").textContent = base.replace(/^https?:\/\//, "");
+}
+document.querySelector(".seg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  mode = b.dataset.mode;
+  document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
+$("place").addEventListener("input", render);
+$("print").onclick = () => window.print();
+render();
+</script>
+</body>
+</html>
