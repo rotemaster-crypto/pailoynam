@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0F5E78">
+<meta name="theme-color" content="#F6F7F9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ป้ายลอยน้ำ">
@@ -12,199 +12,220 @@
 <title>ป้ายลอยน้ำ — ตามหาป้ายทะเบียนที่หลุดหายช่วงน้ำท่วม</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* ระบบดีไซน์: สีหลักสีเดียว พื้นเรียบ ฟอนต์เดียว ระยะห่างฐาน 4/8px ทุกขั้นพอดีหนึ่งหน้าจอ */
 :root{
-  --bg:#EAF1F3; --surface:#FFFFFF; --plate:#FDFDF7; --ink:#15191C; --muted:#56646B;
-  --water:#0F5E78; --water-2:#D5E7EC; --rescue:#F2C230; --ok:#2E7D4F; --bad:#B3261E; --line:#C6D3D8;
-  --plate-font:"Chakra Petch","IBM Plex Sans Thai",system-ui,sans-serif;
-  --body-font:"IBM Plex Sans Thai","Noto Sans Thai",Tahoma,system-ui,sans-serif;
+  --bg:#F6F7F9; --surface:#FFFFFF; --ink:#111827; --muted:#6B7280; --line:#E5E7EB; --line-2:#D1D5DB;
+  --accent:#0B6E8F; --accent-ink:#FFFFFF; --accent-soft:#E6F2F6;
+  --ok:#15803D; --ok-soft:#E8F5EC; --bad:#B91C1C; --warn-soft:#FEF7E0; --warn-line:#F5D98B;
+  --plate:#FFFFFF; --plate-ink:#111827;
+  --r:12px; --r-lg:16px;
+  --font:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0E1A1F; --surface:#15252C; --plate:#F4F4EC; --ink:#E9EEF0; --muted:#9FB0B7;
-    --water:#5FB4CF; --water-2:#1D3943; --rescue:#F2C230; --ok:#6CC18F; --bad:#FF8A80; --line:#2B434C;
+    --bg:#0B0F14; --surface:#131920; --ink:#F3F4F6; --muted:#9CA3AF; --line:#1F2933; --line-2:#2D3A46;
+    --accent:#4FB3D6; --accent-ink:#0B0F14; --accent-soft:#12303B;
+    --ok:#4ADE80; --ok-soft:#10261A; --bad:#F87171; --warn-soft:#2A2310; --warn-line:#5C4A14;
+    --plate:#F9FAFB; --plate-ink:#111827;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0E1A1F; --surface:#15252C; --plate:#F4F4EC; --ink:#E9EEF0; --muted:#9FB0B7;
-  --water:#5FB4CF; --water-2:#1D3943; --rescue:#F2C230; --ok:#6CC18F; --bad:#FF8A80; --line:#2B434C;
+  --bg:#0B0F14; --surface:#131920; --ink:#F3F4F6; --muted:#9CA3AF; --line:#1F2933; --line-2:#2D3A46;
+  --accent:#4FB3D6; --accent-ink:#0B0F14; --accent-soft:#12303B;
+  --ok:#4ADE80; --ok-soft:#10261A; --bad:#F87171; --warn-soft:#2A2310; --warn-line:#5C4A14;
+  --plate:#F9FAFB; --plate-ink:#111827;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body-font);font-size:16px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
 img{max-width:100%}
 button,input,select,textarea{font:inherit;color:inherit}
 button{touch-action:manipulation}
-:focus-visible{outline:3px solid var(--rescue);outline-offset:2px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hidden{display:none!important}
 
-/* ---------- โครงหน้า: แถบบน + หน้าจอทีละหน้า + ปุ่มหลักล่างจอ ---------- */
-.app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
-.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:var(--bg)}
-.topbar .back{width:48px;height:48px;border-radius:50%;border:0;background:var(--surface);display:grid;place-items:center;cursor:pointer;flex:none;box-shadow:0 1px 0 var(--line)}
-.topbar .ttl{flex:1;min-width:0;font-family:var(--plate-font);font-weight:700;font-size:1.15rem;line-height:1.2}
-.topbar .ttl small{display:block;font-family:var(--body-font);font-weight:400;font-size:.8rem;color:var(--muted)}
-.steps{display:flex;gap:5px;padding:0 16px 6px}
-.steps i{flex:1;height:5px;border-radius:3px;background:var(--line)}
-.steps i.on{background:var(--water)}
+/* ---------- โครง ---------- */
+.app{max-width:520px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:4px;padding:calc(6px + env(safe-area-inset-top,0px)) 8px 6px;background:var(--bg)}
+.topbar .back{width:44px;height:44px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;flex:none}
+.topbar .back:active{background:var(--line)}
+.topbar .ttl{flex:1;min-width:0;font-weight:600;font-size:1rem;line-height:1.25}
+.topbar .ttl small{display:block;font-weight:400;font-size:.8rem;color:var(--muted)}
+.steps{display:flex;gap:4px;padding:0 16px 8px}
+.steps i{flex:1;height:3px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--accent)}
 
-.screen{flex:1;display:flex;flex-direction:column;padding:4px 16px 0}
+.screen{flex:1;display:flex;flex-direction:column;padding:0 16px}
 .screen > .grow{flex:1}
-.bar{position:sticky;bottom:0;z-index:5;margin:18px -16px 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--bg) 18%);display:flex;flex-direction:column;gap:8px}
-.q{font-family:var(--plate-font);font-size:1.45rem;font-weight:700;line-height:1.3;margin:6px 0 4px}
-.sub{color:var(--muted);margin:0 0 16px;font-size:.95rem}
+/* ขั้นตอนแจ้งป้าย: สูงพอดีจอ ปุ่มหลักอยู่ล่างเสมอ */
+.screen.fit{min-height:calc(100dvh - 72px - env(safe-area-inset-top,0px))}
+.bar{position:sticky;bottom:0;z-index:5;margin:16px -16px 0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);display:flex;flex-direction:column;gap:6px}
+.q{font-size:1.3rem;font-weight:600;line-height:1.3;margin:4px 0 4px}
+.sub{color:var(--muted);margin:0 0 16px;font-size:.9rem}
 
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:14px;padding:14px 18px;min-height:56px;font-weight:600;font-size:1.08rem;cursor:pointer;background:var(--water);color:#fff;text-decoration:none;text-align:center}
-.btn.alt{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
-.btn.rescue{background:var(--rescue);color:#15191C}
+/* ---------- ปุ่ม ---------- */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px solid transparent;border-radius:var(--r);padding:10px 16px;min-height:50px;font-weight:600;font-size:1rem;cursor:pointer;background:var(--accent);color:var(--accent-ink);text-decoration:none;text-align:center}
+.btn.alt{background:var(--surface);color:var(--ink);border-color:var(--line-2)}
+.btn.rescue{background:var(--accent);color:var(--accent-ink)}
 .btn.line{background:#06C755;color:#fff}
-.btn.text{background:transparent;color:var(--water);min-height:48px;font-size:1rem}
-.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.text{background:transparent;color:var(--accent);min-height:40px;padding:6px}
+.btn.sm{min-height:44px;font-size:.9rem;font-weight:500}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:active{filter:brightness(.95)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
 /* ---------- หน้าแรก ---------- */
-.hero{padding:10px 0 4px}
-.hero h1{font-family:var(--plate-font);font-size:1.7rem;margin:0;line-height:1.2}
-.hero p{margin:4px 0 0;color:var(--muted)}
-.stat{display:inline-flex;align-items:baseline;gap:6px;margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 14px;font-size:.9rem;color:var(--muted)}
-.stat b{font-family:var(--plate-font);font-size:1.2rem;color:var(--water)}
-.stat.ok b{color:var(--ok)}
-.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.stats .stat{margin-top:0}
-.big-choices{display:flex;flex-direction:column;gap:12px;margin-top:18px}
-.choice{display:flex;align-items:center;gap:16px;width:100%;text-align:left;border:0;border-radius:20px;padding:20px 18px;min-height:104px;cursor:pointer;background:var(--water);color:#fff;text-decoration:none;box-shadow:0 6px 16px -8px rgba(0,0,0,.35)}
-.choice.found{background:var(--rescue);color:#15191C}
-.choice .ico{font-size:2.3rem;line-height:1;flex:none}
-.choice b{display:block;font-family:var(--plate-font);font-size:1.35rem;line-height:1.25}
-.choice span.d{font-size:.9rem;opacity:.9}
-.choice .arr{margin-left:auto;font-size:1.6rem;opacity:.8}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:calc(20px + env(safe-area-inset-top,0px)) 0 16px}
+.brand{font-weight:700;font-size:1.5rem;line-height:1.2;letter-spacing:-.01em}
+.brand small{display:block;font-weight:400;font-size:.9rem;color:var(--muted);letter-spacing:0;margin-top:2px}
+.count{font-size:.8rem;color:var(--muted);text-align:right;flex:none}
+.count b{font-size:1.5rem;font-weight:700;color:var(--ink);display:block;line-height:1.1;font-variant-numeric:tabular-nums}
+.count .ok b{color:var(--ok)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--line);border-radius:var(--r);padding:3px;margin-bottom:16px}
+.tabs a{display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px;border-radius:10px;font-weight:500;color:var(--muted);text-decoration:none;text-align:center}
+.tabs a[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
-.panel h2{font-family:var(--plate-font);font-size:1.1rem;margin:0 0 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px}
+.panel h2{font-size:.9rem;font-weight:600;margin:0 0 2px}
 .trk{display:flex;gap:8px;margin-top:8px}
-.trk-open{flex:1;display:flex;align-items:center;gap:12px;text-align:left;border:1.5px solid var(--line);background:var(--bg);border-radius:14px;padding:8px 12px;cursor:pointer;min-height:64px}
-.trk.found .trk-open{border-color:var(--ok);border-width:2px;background:color-mix(in srgb,var(--ok) 14%,var(--bg))}
+.trk-open{flex:1;display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:8px 12px;cursor:pointer;min-height:56px;font-size:.85rem;color:var(--muted)}
+.trk.found .trk-open{border-color:var(--ok);background:var(--ok-soft);color:var(--ink)}
 .trk .hit{color:var(--ok)}
-.trk-x{border:1.5px solid var(--line);background:var(--bg);border-radius:14px;width:52px;cursor:pointer;color:var(--muted);font-size:1.1rem}
-.small{font-size:.85rem;color:var(--muted);margin:10px 0 0}
-.notice{background:var(--water-2);border-radius:14px;padding:12px 14px;font-size:.9rem;margin-top:12px}
-details.notice summary{cursor:pointer;font-weight:600;min-height:32px}
+.trk-x{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);width:44px;cursor:pointer;color:var(--muted)}
+.small{font-size:.8rem;color:var(--muted);margin:8px 0 0}
+.callout{margin:24px 0 0;padding:12px 14px;border-radius:var(--r);background:var(--warn-soft);border:1px solid var(--warn-line);font-size:.85rem;color:var(--ink)}
+.callout b{display:block;margin-bottom:2px}
+.callout + .notice{border-top:0;margin-top:12px;padding-top:0}
+.owner-hint{margin-top:12px;padding:12px 14px;border-radius:var(--r);background:var(--ok-soft);border:1px solid var(--ok);font-size:.9rem}
+.owner-hint b{color:var(--ok)}
+.lost-card{background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r-lg);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.lost-card .meta{font-size:.82rem;color:var(--muted)}
+.lost-card .acts{display:flex;gap:8px;flex-wrap:wrap}
+.lost-card .acts a,.lost-card .acts button{flex:1 1 auto;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;padding:8px 12px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface);text-decoration:none;color:var(--ink);cursor:pointer}
+.lost-card .acts .pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.tag{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:middle}
+.notice{border-top:1px solid var(--line);padding:16px 0 0;font-size:.82rem;color:var(--muted);margin:24px 0 0}
+.notice + .notice{border-top:0;padding-top:0;margin-top:8px}
+.notice b{color:var(--ink)}
 
-/* ---------- ป้ายทะเบียน ---------- */
-.plate{background:var(--plate);color:#15191C;border:3px solid #15191C;border-radius:12px;padding:10px 14px 8px;box-shadow:inset 0 0 0 2px var(--plate),inset 0 0 0 4px #15191C;position:relative}
-.plate::before,.plate::after{content:"";position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:#9AA3A7;transform:translateY(-50%)}
-.plate::before{left:10px}.plate::after{right:10px}
-.plate-row{display:flex;gap:10px;align-items:center;justify-content:center}
-.plate input{border:0;background:transparent;font-family:var(--plate-font);font-weight:700;color:#15191C;text-align:center;padding:0;min-width:0}
-.plate input::placeholder{color:#B8BDBF}
-.plate .p-prefix{font-size:2.2rem;width:4.2ch}
-.plate .p-num{font-size:2.8rem;width:4.4ch;letter-spacing:.04em}
-.plate .p-prov{display:block;width:100%;font-size:1.05rem;font-weight:600;border-top:1.5px solid #15191C;padding-top:4px;margin-top:2px}
-.plate input:focus{outline:none;background:#FFF6D1;border-radius:6px}
-.plate:focus-within{box-shadow:inset 0 0 0 2px var(--plate),inset 0 0 0 4px #15191C,0 0 0 4px var(--rescue)}
-.hint{font-size:.85rem;color:var(--muted);margin:8px 2px 0}
-.mini-plate{display:inline-block;background:var(--plate);color:#15191C;border:2px solid #15191C;border-radius:6px;padding:2px 10px;font-family:var(--plate-font);font-weight:700;font-size:1.2rem;line-height:1.25;text-align:center;white-space:nowrap}
-.mini-plate small{display:block;font-size:.7rem;font-weight:600;border-top:1px solid #15191C}
-.mini-plate.lg{font-size:1.8rem;padding:4px 18px}
-.mini-plate.lg small{font-size:.9rem}
+/* ---------- ช่องเลขทะเบียน ---------- */
+.plate{background:var(--plate);color:var(--plate-ink);border:1.5px solid var(--line-2);border-radius:var(--r-lg);padding:10px 16px 8px}
+.plate:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.plate-row{display:flex;gap:12px;align-items:center;justify-content:center}
+.plate input{border:0;background:transparent;font-weight:700;color:var(--plate-ink);text-align:center;padding:0;min-width:0;font-variant-numeric:tabular-nums}
+.plate input::placeholder{color:#C4C9D0;font-weight:600}
+.plate input:focus{outline:none}
+.plate .p-prefix{font-size:2rem;width:4.2ch}
+.plate .p-num{font-size:2.5rem;width:4.4ch;letter-spacing:.02em}
+.plate .p-prov{display:block;width:100%;font-size:.95rem;font-weight:500;border-top:1px solid var(--line);padding-top:6px;margin-top:4px}
+.hint{font-size:.8rem;color:var(--muted);margin:8px 2px 0}
+.mini-plate{display:inline-block;background:var(--plate);color:var(--plate-ink);border:1px solid var(--line-2);border-radius:8px;padding:2px 10px;font-weight:700;font-size:1.1rem;line-height:1.3;text-align:center;white-space:nowrap}
+.mini-plate small{display:block;font-size:.68rem;font-weight:500;color:#6B7280;border-top:1px solid var(--line)}
+.mini-plate.lg{font-size:1.75rem;padding:6px 20px}
+.mini-plate.lg small{font-size:.85rem}
 
 /* ---------- ผลค้นหา ---------- */
-.res-head{display:flex;align-items:center;gap:8px;margin:18px 0 8px}
-.res-head .lbl{font-weight:600}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chips button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;min-height:44px;cursor:pointer;font-size:.93rem}
-.chips button[aria-pressed="true"]{border-color:var(--water);background:var(--water);color:#fff}
+.res-head{display:flex;align-items:center;gap:8px;margin:20px 0 10px}
+.res-head .lbl{font-weight:600;font-size:.95rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:6px 14px;min-height:36px;cursor:pointer;font-size:.85rem;color:var(--muted)}
+.chips button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
 .results{display:flex;flex-direction:column;gap:12px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
-.card .top{display:grid;grid-template-columns:104px 1fr}
-.card .thumb{background:var(--water-2);display:grid;place-items:center;min-height:104px;cursor:pointer;border:0;padding:0}
-.card .thumb img{width:104px;height:104px;object-fit:cover;display:block}
-.card .thumb span{font-size:.8rem;color:var(--muted);padding:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.card .top{display:grid;grid-template-columns:96px 1fr}
+.card .thumb{background:var(--line);display:grid;place-items:center;min-height:96px;cursor:pointer;border:0;padding:0}
+.card .thumb img{width:96px;height:96px;object-fit:cover;display:block}
+.card .thumb span{font-size:.75rem;color:var(--muted);padding:6px}
 .card .body{padding:12px 14px}
-.card .meta{font-size:.88rem;color:var(--muted);margin-top:6px}
+.card .meta{font-size:.82rem;color:var(--muted);margin-top:6px}
 .card .warn{color:var(--bad)}
-.card .pickup{margin:0 14px;font-size:.95rem;border-left:4px solid var(--rescue);padding:2px 0 2px 10px}
-.card .pickup b{display:block}
+.card .pickup{margin:0 14px;padding:10px 0 0;border-top:1px solid var(--line);font-size:.9rem;color:var(--muted)}
+.card .pickup b{display:block;color:var(--ink);font-weight:600}
 .card .foot{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
 .card .acts{display:flex;gap:8px;flex-wrap:wrap}
-.card .acts a,.card .acts button{flex:1 1 auto;min-height:46px;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);text-decoration:none;color:var(--ink);cursor:pointer}
-.card.match{outline:3px solid var(--rescue)}
-.card.returned{opacity:.6}
-.badge{display:inline-block;font-size:.78rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--ok);color:#fff;margin-left:6px;vertical-align:middle}
-.empty{text-align:center;padding:24px 12px;color:var(--muted)}
-.empty b{display:block;color:var(--ink);font-family:var(--plate-font);font-size:1.1rem;margin-bottom:4px}
-.contact-box{font-size:.95rem;padding:10px 12px;border-radius:12px;background:var(--bg)}
+.card .acts a,.card .acts button{flex:1 1 auto;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;padding:8px 12px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface);text-decoration:none;color:var(--ink);cursor:pointer}
+.card.match{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.card.returned{opacity:.55}
+.badge{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--ok-soft);color:var(--ok);margin-left:6px;vertical-align:middle}
+.empty{text-align:center;padding:32px 12px;color:var(--muted);font-size:.9rem}
+.empty b{display:block;color:var(--ink);font-size:1rem;font-weight:600;margin-bottom:4px}
+.contact-box{font-size:.9rem;padding:10px 12px;border-radius:var(--r);background:var(--bg)}
 
 /* ---------- ขั้นตอนแจ้งป้าย ---------- */
-.camera{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2.5px dashed var(--water);border-radius:22px;min-height:46dvh;cursor:pointer;background:var(--surface);text-align:center;padding:16px;color:var(--water)}
-.camera .ico{font-size:4rem;line-height:1}
-.camera b{font-family:var(--plate-font);font-size:1.4rem}
-.preview{display:block;width:100%;max-height:34dvh;object-fit:contain;border-radius:14px;background:#000;margin-bottom:12px}
-.status{font-size:.93rem;color:var(--muted);margin-top:10px;min-height:1.4em}
+.camera{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:1.5px dashed var(--line-2);border-radius:var(--r-lg);cursor:pointer;background:var(--surface);text-align:center;padding:16px;color:var(--muted);min-height:180px}
+.camera .ico{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--accent-soft);color:var(--accent)}
+.camera b{font-size:1.05rem;font-weight:600;color:var(--ink)}
+.preview{display:block;width:100%;max-height:26dvh;object-fit:contain;border-radius:var(--r);background:#000;margin-bottom:12px}
+.status{font-size:.85rem;color:var(--muted);margin-top:8px;min-height:1.3em}
 .status.good{color:var(--ok)} .status.bad{color:var(--bad)}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;margin-right:6px;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.loc{display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;background:var(--surface);border:2px solid var(--line)}
-.loc.ok{border-color:var(--ok)}
-.loc .ico{font-size:2rem}
-.loc b{display:block}
-.loc span{font-size:.88rem;color:var(--muted)}
-label.f{display:block;font-weight:600;font-size:.95rem;margin:16px 0 6px}
-.inp{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;min-height:52px;font-size:16px}
-.opts{display:flex;flex-direction:column;gap:8px}
-.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 14px;min-height:58px;cursor:pointer;font-size:1.02rem}
-.opt .ico{font-size:1.4rem;width:1.6em;text-align:center}
-.opt[aria-checked="true"]{border-color:var(--water);background:color-mix(in srgb,var(--water) 12%,var(--surface));font-weight:600}
-.opt[aria-checked="true"]::after{content:"✓";margin-left:auto;color:var(--water);font-weight:700}
-.done-ico{font-size:4rem;text-align:center;margin-top:8px}
+.loc{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;padding:12px 14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line-2)}
+.loc.ok{border-color:var(--ok);background:var(--ok-soft)}
+.loc .ico{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--accent-soft);color:var(--accent);flex:none}
+.loc b{display:block;font-weight:600}
+.loc span{font-size:.82rem;color:var(--muted)}
+label.f{display:block;font-weight:500;font-size:.85rem;margin:14px 0 4px;color:var(--muted)}
+.inp{width:100%;border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:10px 14px;min-height:46px;font-size:16px}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{display:flex;align-items:center;justify-content:center;text-align:center;border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:8px 10px;min-height:56px;cursor:pointer;font-size:.9rem;line-height:1.3}
+.opt[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600;box-shadow:0 0 0 1px var(--accent)}
+.done-ico{display:grid;place-items:center;width:64px;height:64px;margin:24px auto 0;border-radius:50%;background:var(--ok-soft);color:var(--ok)}
 
-dialog{border:0;border-radius:20px;padding:0;width:min(94vw,520px);background:var(--surface);color:var(--ink)}
-dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog{border:0;border-radius:var(--r-lg);padding:0;width:min(94vw,480px);background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
 dialog img{display:block;width:100%}
-dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);padding:16px;background:var(--surface);font-weight:600;cursor:pointer;min-height:56px}
-.sheet{padding:18px}
-.sheet h2{font-family:var(--plate-font);margin:0 0 8px;font-size:1.25rem}
-.sheet p{margin:0 0 10px;font-size:.95rem}
+dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);padding:14px;background:var(--surface);font-weight:500;color:var(--muted);cursor:pointer;min-height:52px}
+.sheet{padding:20px}
+.sheet h2{margin:0 0 8px;font-size:1.15rem;font-weight:600}
+.sheet p{margin:0 0 12px;font-size:.9rem;color:var(--muted)}
+.sheet p b{color:var(--ink)}
 .sheet .btn{margin-top:8px}
 
 @media (prefers-reduced-motion: no-preference){
-  .screen{animation:in .18s ease-out}
-  @keyframes in{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+  .screen{animation:in .15s ease-out}
+  @keyframes in{from{opacity:0}to{opacity:1}}
 }
 @media (max-width:360px){
-  .plate .p-prefix{font-size:1.8rem}.plate .p-num{font-size:2.2rem}
-  .card .top{grid-template-columns:88px 1fr}.card .thumb img{width:88px;height:88px}
+  .plate .p-prefix{font-size:1.7rem}.plate .p-num{font-size:2.1rem}
+  .card .top{grid-template-columns:84px 1fr}.card .thumb img{width:84px;height:84px}
+}
+/* จอเตี้ย (มือถือเล็ก): บีบระยะให้ยังพอดีหน้าจอเดียว */
+@media (max-height:700px){
+  .q{font-size:1.15rem}.sub{margin-bottom:10px}
+  .plate .p-num{font-size:2.1rem}.plate .p-prefix{font-size:1.7rem}
+  label.f{margin-top:10px}
+  .opt{min-height:48px}
+  .camera{min-height:140px}
 }
 </style>
 </head>
 <body>
 <div class="app">
-  <header class="topbar">
+  <header class="topbar hidden" id="topbar">
     <button class="back hidden" id="back" aria-label="ย้อนกลับ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
     <div class="ttl" id="ttl">ป้ายลอยน้ำ</div>
   </header>
   <div class="steps hidden" id="steps" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
-  <!-- ===== หน้าแรก ===== -->
+  <!-- ===== หน้าแรก = ค้นหา (หน้าตาแบบแรก) ===== -->
   <main class="screen" id="s-home">
-    <div class="hero">
-      <h1>ป้ายทะเบียนหลุดหายช่วงน้ำท่วม?</h1>
-      <p>คนเจอแจ้ง เจ้าของค้น แล้วนำทางไปรับได้ทันที ฟรี ไม่ต้องสมัคร</p>
-      <div class="stats" id="stats"><span class="stat">✓ ฟรี ไม่ต้องสมัคร</span><span class="stat">✓ ไม่เก็บข้อมูลเจ้าของ</span></div>
-    </div>
+    <header class="top">
+      <div class="brand">ป้ายลอยน้ำ<small>ป้ายทะเบียนหลุดหายช่วงน้ำท่วม เจอแล้วแจ้ง หายแล้วค้น</small></div>
+      <div class="count" id="stats"></div>
+    </header>
 
-    <div class="panel hidden" id="tracked" style="margin-top:16px"></div>
+    <nav class="tabs" role="tablist">
+      <a role="tab" aria-selected="true" href="#">ป้ายผมหาย</a>
+      <a role="tab" aria-selected="false" href="#report/1">ผมเก็บป้ายได้</a>
+    </nav>
 
-    <div class="grow"></div>
-    <div class="big-choices">
-      <a class="choice" href="#find"><span class="ico" aria-hidden="true">🔍</span><span><b>ป้ายรถผมหาย</b><span class="d">ค้นด้วยเลขทะเบียน หรือฝากให้ระบบตามหา</span></span><span class="arr" aria-hidden="true">›</span></a>
-      <a class="choice found" href="#report/1"><span class="ico" aria-hidden="true">📷</span><span><b>ผมเก็บป้ายได้</b><span class="d">ถ่ายรูปแจ้ง ใช้เวลาไม่ถึง 1 นาที</span></span><span class="arr" aria-hidden="true">›</span></a>
-    </div>
-    <p class="notice"><b>ระวังมิจฉาชีพ:</b> รับป้ายคืนไม่มีค่าใช้จ่าย อย่าโอนเงินให้ใคร นัดรับที่สถานีตำรวจหรือที่สาธารณะ และเตรียมเล่มทะเบียนหรือบัตรประชาชนไปยืนยันตัว</p>
-    <details class="notice" style="margin-bottom:24px"><summary>หาป้ายไม่เจอ ทำยังไง</summary>ทำป้ายใหม่ได้ที่สำนักงานขนส่งโดยไม่ต้องแจ้งความ สายด่วนกรมการขนส่งทางบก 1584 ส่วนผู้ที่เก็บป้ายของคนอื่นได้ ฝากไว้ที่สถานีตำรวจใกล้บ้านได้</details>  </main>
+    <div class="panel hidden" id="tracked" style="margin-bottom:16px"></div>
 
-  <!-- ===== ค้นหา ===== -->
-  <main class="screen hidden" id="s-find">
     <div class="plate" aria-label="ป้อนเลขทะเบียนที่ต้องการค้นหา">
       <div class="plate-row">
         <input class="p-prefix" id="s-prefix" placeholder="กข" maxlength="4" autocomplete="off" enterkeyhint="search" aria-label="หมวดอักษร (ไม่บังคับ)">
@@ -212,45 +233,53 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
       </div>
       <input class="p-prov" id="s-prov" list="provinces" placeholder="จังหวัด (ไม่บังคับ)" enterkeyhint="search" aria-label="จังหวัด">
     </div>
-    <p class="hint">พิมพ์แค่เลข 4 หลักก็ค้นได้</p>
+    <p class="hint">พิมพ์แค่เลข 4 หลัก ค้นได้ทั้งป้ายที่มีคนเจอ และคนที่กำลังตามหาป้าย</p>
+    <div id="find-bar" class="hidden" style="margin-top:12px">
+      <button type="button" class="btn" id="save-btn">ประกาศป้ายหาย / ฝากตามหาเลขนี้</button>
+      <button type="button" class="btn alt hidden" id="saved-btn">✓ กำลังตามหาอยู่ · ส่งลิงก์เข้า LINE</button>
+    </div>
 
     <div class="res-head">
       <span class="lbl" id="res-title">แจ้งล่าสุด</span>
       <div class="chips" id="sort-chips" style="margin-left:auto">
         <button aria-pressed="true" data-sort="new">ล่าสุด</button>
-        <button aria-pressed="false" data-sort="near">📍 ใกล้ฉัน</button>
+        <button aria-pressed="false" data-sort="near">ใกล้ฉัน</button>
       </div>
     </div>
     <div class="status" id="find-status" style="margin-top:0"></div>
-    <div class="results grow" id="results"></div>
-
-    <div class="bar hidden" id="find-bar">
-      <button type="button" class="btn rescue" id="save-btn">🔔 ฝากตามหาเลขนี้ไว้</button>
-      <button type="button" class="btn alt hidden" id="saved-btn">✓ กำลังตามหาอยู่ · ส่งลิงก์เข้า LINE</button>
+    <div class="results" id="results"></div>
+    <div id="lost-wrap" class="hidden">
+      <div class="res-head"><span class="lbl" id="lost-title">คนที่ตามหาป้ายเลขนี้</span></div>
+      <div class="results" id="lost-results"></div>
     </div>
+
+    <p class="callout"><b>ระวังมิจฉาชีพ</b> รับป้ายคืนไม่มีค่าใช้จ่าย อย่าโอนเงินให้ใคร นัดรับที่สถานีตำรวจหรือที่สาธารณะ และเตรียมเล่มทะเบียนหรือบัตรประชาชนไปยืนยันตัว</p>
+    <p class="notice" style="margin-bottom:24px">ผู้ที่เก็บป้ายของคนอื่นได้ควรส่งคืนเจ้าของหรือฝากสถานีตำรวจ ถ้าหาไม่เจอ ทำป้ายใหม่ได้ที่สำนักงานขนส่งโดยไม่ต้องแจ้งความ สายด่วนกรมการขนส่งทางบก 1584</p>
   </main>
 
   <!-- ===== แจ้ง 1: ถ่ายรูป ===== -->
-  <main class="screen hidden" id="s-r1">
+  <main class="screen fit hidden" id="s-r1">
     <h2 class="q">ถ่ายรูปป้ายที่เจอ</h2>
     <p class="sub">ให้เห็นตัวอักษรกับจังหวัด เจ้าของจะดูรูปยืนยันว่าเป็นป้ายตัวเอง</p>
     <label class="camera grow">
       <input type="file" id="photo" accept="image/*" capture="environment" class="hidden">
-      <span class="ico" aria-hidden="true">📷</span>
+      <span class="ico" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
       <b>แตะเพื่อถ่ายรูป</b>
     </label>
     <div class="bar">
-      <label class="btn alt">🖼️ เลือกจากคลังภาพ<input type="file" id="photo2" accept="image/*" class="hidden"></label>
-      <button type="button" class="btn alt" id="paste-btn">📋 วางข้อความจากโพสต์ FB / LINE</button>
+      <div class="row2">
+        <label class="btn alt sm">เลือกจากคลังภาพ<input type="file" id="photo2" accept="image/*" class="hidden"></label>
+        <button type="button" class="btn alt sm" id="paste-btn">วางข้อความจากโพสต์</button>
+      </div>
       <button type="button" class="btn text" id="skip-photo">ไม่มีรูป พิมพ์เลขเอง</button>
     </div>
   </main>
 
   <!-- ===== แจ้ง 2: ตรวจเลข ===== -->
-  <main class="screen hidden" id="s-r2">
-    <h2 class="q">พิมพ์เลขทะเบียนตามป้าย</h2>
+  <main class="screen fit hidden" id="s-r2">
+    <h2 class="q">เลขทะเบียนบนป้าย</h2>
     <img class="preview hidden" id="r-preview" alt="รูปป้ายที่ถ่าย">
-    <label class="btn alt hidden" id="r2-photo" style="margin-bottom:12px">📷 แนบรูปป้ายจากโพสต์<input type="file" id="photo3" accept="image/*" class="hidden"></label>
+    <label class="btn alt sm hidden" id="r2-photo" style="margin-bottom:12px">แนบรูปป้ายจากโพสต์<input type="file" id="photo3" accept="image/*" class="hidden"></label>
     <div class="plate">
       <div class="plate-row">
         <input class="p-prefix" id="r-prefix" placeholder="กข" maxlength="4" aria-label="หมวดอักษร">
@@ -259,16 +288,17 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
       <input class="p-prov" id="r-prov" list="provinces" placeholder="จังหวัด" aria-label="จังหวัด">
     </div>
     <div class="status" id="ocr-status"></div>
+    <div class="owner-hint hidden" id="owner-hint"></div>
     <div class="grow"></div>
     <div class="bar"><button type="button" class="btn" id="r2-next">ถัดไป</button></div>
   </main>
 
   <!-- ===== แจ้ง 3: เจอที่ไหน ===== -->
-  <main class="screen hidden" id="s-r3">
+  <main class="screen fit hidden" id="s-r3">
     <h2 class="q">เจอป้ายที่ไหน</h2>
     <p class="sub">ช่วยให้เจ้าของรู้ว่าตรงกับเส้นทางที่ขับลุยน้ำ</p>
-    <button type="button" class="loc" id="gps-btn" style="width:100%;text-align:left;cursor:pointer">
-      <span class="ico" aria-hidden="true">📍</span>
+    <button type="button" class="loc" id="gps-btn">
+      <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
       <span><b id="gps-title">ใช้ตำแหน่งตอนนี้</b><span id="gps-sub">แตะเพื่อปักพิกัดจุดที่เจอ</span></span>
     </button>
     <label class="f" for="r-found">บอกจุดเพิ่มเติม (ไม่บังคับ)</label>
@@ -278,40 +308,43 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
   </main>
 
   <!-- ===== แจ้ง 4: รับคืนที่ไหน ===== -->
-  <main class="screen hidden" id="s-r4">
+  <main class="screen fit hidden" id="s-r4">
     <h2 class="q">เจ้าของรับคืนได้ที่ไหน</h2>
-    <div class="opts" id="pickup-opts" role="radiogroup" aria-label="จุดรับคืน">
-      <button type="button" class="opt" role="radio" aria-checked="false" data-v="สถานีตำรวจ"><span class="ico" aria-hidden="true">🚓</span>ฝากสถานีตำรวจ / ป้อมตำรวจ</button>
-      <button type="button" class="opt" role="radio" aria-checked="false" data-v="จุดกู้ภัย"><span class="ico" aria-hidden="true">⛑️</span>เต็นท์ / จุดกู้ภัย</button>
-      <button type="button" class="opt" role="radio" aria-checked="false" data-v="สำนักงานเขต/อบต."><span class="ico" aria-hidden="true">🏢</span>สำนักงานเขต / อบต.</button>
-      <button type="button" class="opt" role="radio" aria-checked="false" data-v="ถือไว้เอง"><span class="ico" aria-hidden="true">🙋</span>ถือไว้เอง ให้เจ้าของติดต่อมา</button>
+    <div class="opts" id="pickup-opts" role="radiogroup" aria-label="จุดรับคืน" style="margin-top:8px">
+      <button type="button" class="opt" role="radio" aria-checked="false" data-v="สถานีตำรวจ">สถานีตำรวจ</button>
+      <button type="button" class="opt" role="radio" aria-checked="false" data-v="จุดกู้ภัย">จุดกู้ภัย</button>
+      <button type="button" class="opt" role="radio" aria-checked="false" data-v="สำนักงานเขต/อบต.">เขต / อบต.</button>
+      <button type="button" class="opt" role="radio" aria-checked="false" data-v="ถือไว้เอง">ถือไว้เอง</button>
     </div>
     <div id="pickup-more" class="hidden">
       <label class="f" for="r-place" id="r-place-lbl">ชื่อสถานที่รับ</label>
       <input class="inp" id="r-place" placeholder="เช่น สภ.ลาดกระบัง" enterkeyhint="next">
       <label class="f" for="r-contact" id="r-contact-lbl">เบอร์หรือไลน์ติดต่อ (ไม่บังคับ)</label>
       <input class="inp" id="r-contact" inputmode="tel" placeholder="คนที่ค้นเลขนี้จะเห็น" enterkeyhint="done">
-      <button type="button" class="btn alt" id="pk-btn" style="margin-top:12px">📍 ตอนนี้ฉันอยู่ที่จุดรับ ปักพิกัดเลย</button>
-      <div class="status" id="pk-status">ไม่ปักก็ได้ เจ้าของจะนำทางด้วยชื่อสถานที่</div>
+      <button type="button" class="btn text" id="pk-btn" style="justify-content:flex-start;padding-left:0">ตอนนี้อยู่ที่จุดรับ? แตะเพื่อปักพิกัด</button>
+      <div class="status" id="pk-status" style="margin-top:0"></div>
     </div>
     <div class="grow"></div>
     <div class="bar">
       <div class="status hidden" id="submit-status" style="margin:0;text-align:center"></div>
-      <button type="button" class="btn rescue" id="submit-btn">✅ ส่งแจ้งป้าย</button>
+      <button type="button" class="btn" id="submit-btn">ส่งแจ้งป้าย</button>
     </div>
   </main>
 
   <!-- ===== เสร็จ ===== -->
-  <main class="screen hidden" id="s-done">
-    <div class="done-ico" aria-hidden="true">🙏</div>
+  <main class="screen fit hidden" id="s-done">
+    <div class="done-ico" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
     <h2 class="q" style="text-align:center">แจ้งเรียบร้อย ขอบคุณที่ช่วย</h2>
-    <p class="sub" style="text-align:center">เจ้าของที่ตามหาเลขนี้จะเห็นทันที แชร์ต่อในกลุ่ม LINE ชุมชนช่วยให้เจ้าของเจอเร็วขึ้น</p>
+    <p class="sub" style="text-align:center">เจ้าของที่ตามหาเลขนี้จะเห็นทันที</p>
     <div id="done-plate" style="text-align:center"></div>
+    <div id="done-owners" class="hidden" style="margin-top:16px"></div>
     <div class="grow"></div>
     <div class="bar">
       <a class="btn line" id="done-line" target="_blank" rel="noopener">แชร์เข้ากลุ่ม LINE</a>
-      <a class="btn" href="#report/1">📷 แจ้งป้ายถัดไป</a>
-      <a class="btn text" href="#">กลับหน้าแรก</a>
+      <div class="row2">
+        <a class="btn alt sm" href="#report/1">แจ้งป้ายถัดไป</a>
+        <a class="btn alt sm" href="#">กลับหน้าแรก</a>
+      </div>
     </div>
   </main>
 </div>
@@ -320,7 +353,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
 
 <dialog id="paste" aria-labelledby="paste-h">
   <div class="sheet">
-    <h2 id="paste-h">📋 วางข้อความจากโพสต์</h2>
+    <h2 id="paste-h">วางข้อความจากโพสต์</h2>
     <p>คัดลอกข้อความโพสต์ “เจอป้าย” จาก Facebook หรือ LINE มาวาง ระบบจะแยกเลขทะเบียน จังหวัด จุดรับ และเบอร์ให้ แล้วคุณตรวจอีกทีก่อนส่ง</p>
     <textarea class="inp" id="paste-text" rows="6" placeholder="เช่น เก็บป้ายได้ 1กข 1234 กทม. ฝากไว้ที่ สภ.ลาดกระบัง โทร 081-234-5678" style="min-height:140px;resize:vertical"></textarea>
     <label class="f" for="paste-url">ลิงก์โพสต์ต้นทาง (ไม่บังคับ)</label>
@@ -332,9 +365,25 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
   <button class="x" id="paste-close">ยกเลิก</button>
 </dialog>
 
+<dialog id="lostdlg" aria-labelledby="lost-h">
+  <div class="sheet">
+    <h2 id="lost-h">ประกาศป้ายหาย</h2>
+    <div id="lost-plate" style="margin:4px 0 8px"></div>
+    <p>คนที่เก็บป้ายได้ค้นเลขนี้แล้วจะเห็นประกาศของคุณ ติดต่อกลับได้ทันที</p>
+    <label class="f" for="lost-area" style="margin-top:8px">หายแถวไหน (ไม่บังคับ)</label>
+    <input class="inp" id="lost-area" maxlength="120" placeholder="เช่น ถ.ลาดกระบัง ช่วงน้ำท่วมสูง">
+    <label class="f" for="lost-contact">เบอร์หรือไลน์ให้คนเจอติดต่อ (ไม่บังคับ)</label>
+    <input class="inp" id="lost-contact" maxlength="80" inputmode="tel" placeholder="คนที่ค้นเลขนี้จะเห็น">
+    <div class="status" id="lost-status"></div>
+    <button type="button" class="btn" id="lost-go">ประกาศและฝากตามหา</button>
+    <button type="button" class="btn text" id="lost-quiet">ฝากตามหาอย่างเดียว ไม่ประกาศ</button>
+  </div>
+  <button class="x" id="lost-close">ยกเลิก</button>
+</dialog>
+
 <dialog id="saved" aria-labelledby="saved-h">
   <div class="sheet">
-    <h2 id="saved-h">🔔 ฝากตามหาแล้ว</h2>
+    <h2 id="saved-h">ฝากตามหาแล้ว</h2>
     <p>เปิดเว็บนี้ครั้งหน้า จะเห็นสถานะที่หน้าแรกทันที ถ้ามีคนแจ้งเลขนี้จะขึ้นว่า <b>“เจอแล้ว”</b></p>
     <p><b>ส่งลิงก์เข้าไลน์ตัวเองไว้</b> จะได้กดเช็กได้ตลอด ไม่หายแม้เปลี่ยนเครื่อง</p>
     <a class="btn line" id="saved-line" target="_blank" rel="noopener">ส่งลิงก์เข้า LINE</a>
@@ -357,13 +406,14 @@ const firebaseConfig = {
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, onSnapshot, query, where, orderBy, limit, getCountFromServer }
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, onSnapshot, query, where, orderBy, limit, getCountFromServer }
   from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
 const fs = getFirestore(app);
 const auth = getAuth(app);
 const plateCol = collection(fs, "plates");
+const lostCol = collection(fs, "lost");
 
 const PROVINCES = "กรุงเทพมหานคร กระบี่ กาญจนบุรี กาฬสินธุ์ กำแพงเพชร ขอนแก่น จันทบุรี ฉะเชิงเทรา ชลบุรี ชัยนาท ชัยภูมิ ชุมพร เชียงราย เชียงใหม่ ตรัง ตราด ตาก นครนายก นครปฐม นครพนม นครราชสีมา นครศรีธรรมราช นครสวรรค์ นนทบุรี นราธิวาส น่าน บึงกาฬ บุรีรัมย์ ปทุมธานี ประจวบคีรีขันธ์ ปราจีนบุรี ปัตตานี พระนครศรีอยุธยา พะเยา พังงา พัทลุง พิจิตร พิษณุโลก เพชรบุรี เพชรบูรณ์ แพร่ ภูเก็ต มหาสารคาม มุกดาหาร แม่ฮ่องสอน ยโสธร ยะลา ร้อยเอ็ด ระนอง ระยอง ราชบุรี ลพบุรี ลำปาง ลำพูน เลย ศรีสะเกษ สกลนคร สงขลา สตูล สมุทรปราการ สมุทรสงคราม สมุทรสาคร สระแก้ว สระบุรี สิงห์บุรี สุโขทัย สุพรรณบุรี สุราษฎร์ธานี สุรินทร์ หนองคาย หนองบัวลำภู อ่างทอง อำนาจเจริญ อุดรธานี อุตรดิตถ์ อุทัยธานี อุบลราชธานี เบตง".split(" ");
 
@@ -403,7 +453,6 @@ function getPosition(){
 /* ================= หน้าจอ: ใช้ hash เพื่อให้ปุ่มย้อนกลับของมือถือทำงาน ================= */
 const SCREENS = {
   home: { ttl: "ป้ายลอยน้ำ", back: null },
-  find: { ttl: "ตามหาป้าย", back: "#" },
   r1:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 1 จาก 4", back: "#", step: 1 },
   r2:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 2 จาก 4", back: "#report/1", step: 2 },
   r3:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 3 จาก 4", back: "#report/2", step: 3 },
@@ -414,8 +463,7 @@ let screen = "home", lastDone = null;
 function route(){
   const h = decodeURIComponent(location.hash);
   let s = "home";
-  if (h.startsWith("#find")) s = "find";
-  else if (h === "#report" || h.startsWith("#report/")){
+  if (h === "#report" || h.startsWith("#report/")){
     const st = h.split("/")[1] || "1";
     s = st === "done" ? "done" : "r" + st;
     if (!SCREENS[s]) s = "r1";
@@ -423,10 +471,11 @@ function route(){
     if ((s === "r3" || s === "r4") && !digits($("r-num").value)) return location.replace("#report/2");
     if (s === "done" && !lastDone) return location.replace("#");
   }
-  if (s === "find") openFromHash();
+  if (s === "home") openFromHash();
   screen = s;
   const cfg = SCREENS[s];
   Object.keys(SCREENS).forEach(k => $("s-"+k).classList.toggle("hidden", k !== s));
+  $("topbar").classList.toggle("hidden", s === "home");
   $("ttl").innerHTML = esc(cfg.ttl) + (cfg.sub ? `<small>${cfg.sub}</small>` : "");
   $("back").classList.toggle("hidden", !cfg.back);
   $("steps").classList.toggle("hidden", !cfg.step);
@@ -435,9 +484,9 @@ function route(){
   onEnter[s]?.();
 }
 const onEnter = {
-  home: () => renderTracked(),
-  find: () => { current.key = null; runSearch(); if (!digits($("s-num").value)) setTimeout(() => $("s-num").focus(), 250); },
+  home: () => { renderTracked(); current.key = null; runSearch(); },
   // มาจากโพสต์: คนกรอกไม่ได้อยู่ที่จุดเจอ จึงไม่ปักพิกัดอัตโนมัติ
+  r2: () => checkOwners(),
   r3: () => {
     if (fromPost){ if (!foundPos) $("gps-sub").textContent = "มาจากโพสต์: ไม่ต้องปักพิกัด ใช้จุดที่บอกในโพสต์ด้านล่าง"; return; }
     if (!foundPos && !gpsBusy) grabGps();
@@ -445,30 +494,45 @@ const onEnter = {
   done: () => {
     const p = lastDone;
     $("done-plate").innerHTML = plateHtml(p.prefix, p.number, p.province, "lg");
+    showOwners(p.number);
     $("done-line").href = lineShare(`📢 มีคนเก็บป้ายทะเบียน ${p.prefix} ${p.number} ${p.province} ได้ เจ้าของดูรูปและนำทางไปรับได้ที่ ${siteUrl()}#find?n=${p.number}`);
   }
 };
+async function showOwners(n){
+  const box = $("done-owners"); box.classList.add("hidden");
+  try{
+    const list = toRows(await getDocs(lostByNumber(n))).filter(l => l.status === "looking");
+    if (!list.length) return;
+    box.innerHTML = `<div class="owner-hint" style="margin:0 0 8px"><b>มีเจ้าของตามหาเลขนี้อยู่ ${list.length} คน</b> ติดต่อบอกได้เลย</div>` +
+      list.map(l => `<div class="lost-card" style="margin-top:8px"><div class="meta">${l.area ? "หายแถว " + esc(l.area) : "ไม่ระบุจุดที่หาย"}</div>
+        ${l.contact ? `<div class="contact-box">ติดต่อ <b>${esc(l.contact)}</b></div>` : `<div class="meta">เจ้าของไม่ได้ใส่เบอร์ แต่จะเห็นป้ายที่คุณแจ้งทันที</div>`}</div>`).join("");
+    box.classList.remove("hidden");
+  }catch{}
+}
 $("back").onclick = () => { location.hash = SCREENS[screen].back; };
 window.addEventListener("hashchange", route);
 
 /* ================= ค้นหา ================= */
 const byNumber = n => query(plateCol, where("numberKey","==",n), limit(50));
 const toRows = snap => snap.docs.map(d => ({id:d.id, ...d.data()}));
-let current = { key:null, rows:[], ready:false, unsub:null }, searchTimer;
+const lostByNumber = n => query(lostCol, where("numberKey","==",n), limit(30));
+let current = { key:null, rows:[], ready:false, unsub:null, lost:[], lostUnsub:null }, searchTimer;
 
 function runSearch(){
   const n = digits($("s-num").value);
   const key = ready ? (n || "__recent") : null;
   if (key === current.key){ render(); return; }
-  current.unsub?.();
-  current = { key, rows:[], ready:false, unsub:null };
+  current.unsub?.(); current.lostUnsub?.();
+  current = { key, rows:[], ready:false, unsub:null, lost:[], lostUnsub:null };
   if (key){
     const q = n ? byNumber(n) : query(plateCol, orderBy("createdAt","desc"), limit(20));
     current.unsub = onSnapshot(q,
       snap => { if (current.key !== key) return; current.rows = toRows(snap); current.ready = true; setStatus($("find-status"), ""); render(); },
       () => setStatus($("find-status"), "การเชื่อมต่อหลุด รีเฟรชหน้าเพื่อดูข้อมูลล่าสุด", "bad"));
+    if (n) current.lostUnsub = onSnapshot(lostByNumber(n),
+      snap => { if (current.key !== key) return; current.lost = toRows(snap); renderLost(); }, () => {});
   }
-  render();
+  render(); renderLost();
 }
 ["s-prefix","s-num","s-prov"].forEach(id => {
   $(id).addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 300); });
@@ -504,15 +568,15 @@ function navTarget(p){
 }
 function contactHtml(p){
   if (!p.contact) return "";
-  if (!shownContact.has(p.id)) return `<div class="acts"><button data-contact="${esc(p.id)}">📞 ดูช่องทางติดต่อคนเก็บได้</button></div>`;
-  const tel = /^[0-9+\-\s]{8,}$/.test(p.contact) ? `<a href="tel:${esc(p.contact.replace(/\s/g,""))}">📞 โทรเลย</a>` : "";
-  return `<div class="contact-box">ติดต่อ <b>${esc(p.contact)}</b></div>${tel ? `<div class="acts">${tel}</div>` : ""}`;
+  if (!shownContact.has(p.id)) return `<div class="acts"><button data-contact="${esc(p.id)}">ดูช่องทางติดต่อคนเก็บได้</button></div>`;
+  const tel = /^[0-9+\-\s]{8,}$/.test(p.contact) ? `<a href="tel:${esc(p.contact.replace(/\s/g,""))}">โทร</a>` : "";
+  return `<div class="contact-box">ติดต่อ <b>${esc(p.contact)}</b><br><span class="small">อย่าโอนเงินให้ใคร ยืนยันตัวด้วยเล่มทะเบียนตอนรับป้าย</span></div>${tel ? `<div class="acts">${tel}</div>` : ""}`;
 }
 function cardHtml(p, qp){
   const d = p._d!=null && isFinite(p._d) ? ` · ห่าง ${p._d<1 ? Math.round(p._d*1000)+" ม." : p._d.toFixed(1)+" กม."}` : "";
   const navUrl = navTarget(p), returned = p.status === "returned";
   const prefixOff = qp && p.prefix && normPrefix(p.prefix) !== qp;
-  const map = p.lat!=null ? `<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" rel="noopener">🗺️ จุดที่เจอ</a>` : "";
+  const map = p.lat!=null ? `<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" rel="noopener">จุดที่เจอ (แผนที่)</a>` : "";
   return `<article class="card ${returned?"returned":""} ${p._s>0 && !returned?"match":""}">
     <div class="top">
       <button class="thumb" data-photo="${esc(p.id)}" aria-label="ดูรูปป้าย ${esc(p.prefix)} ${esc(p.number)}"><span>ดูรูป</span></button>
@@ -526,7 +590,7 @@ function cardHtml(p, qp){
     <div class="foot">
       ${navUrl && !returned ? `<a class="btn" href="${navUrl}" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4.5 20.3l.7.7L12 18l6.8 3 .7-.7z"/></svg>นำทางไปรับป้าย</a>` : ""}
       ${returned ? "" : contactHtml(p)}
-      <div class="acts">${map}${p.sourceUrl && /^https:\/\//.test(p.sourceUrl) ? `<a href="${esc(p.sourceUrl)}" target="_blank" rel="noopener nofollow">↗ โพสต์ต้นทาง</a>` : ""}${returned ? "" : `<button data-done="${esc(p.id)}">✓ ได้คืนแล้ว</button>`}</div>
+      <div class="acts">${map}${p.sourceUrl && /^https:\/\//.test(p.sourceUrl) ? `<a href="${esc(p.sourceUrl)}" target="_blank" rel="noopener nofollow">↗ โพสต์ต้นทาง</a>` : ""}${returned ? "" : `<button data-done="${esc(p.id)}">ได้คืนแล้ว</button>`}</div>
     </div></article>`;
 }
 
@@ -574,8 +638,39 @@ function render(){
   }
   box.innerHTML = list.map(p => cardHtml(p, qp)).join("");
   box.querySelectorAll("[data-photo]").forEach(loadThumb);
-  if (qn && screen === "find") markSeen(qn, list);
+  if (qn && screen === "home") markSeen(qn, list);
 }
+
+function contactReveal(id, contact, label){
+  if (!contact) return "";
+  if (!shownContact.has(id)) return `<button data-contact="${esc(id)}">${label}</button>`;
+  const tel = /^[0-9+-s]{8,}$/.test(contact) ? `<a href="tel:${esc(contact.replace(/s/g,""))}">โทร</a>` : "";
+  return `<div class="contact-box" style="flex-basis:100%">ติดต่อ <b>${esc(contact)}</b><br><span class="small">อย่าโอนเงินให้ใคร ยืนยันตัวด้วยเล่มทะเบียนตอนรับป้าย</span></div>${tel}`;
+}
+function renderLost(){
+  const qn = digits($("s-num").value), list = current.lost.filter(l => l.status === "looking");
+  $("lost-wrap").classList.toggle("hidden", !qn || !list.length);
+  if (!qn || !list.length) return;
+  $("lost-title").textContent = `คนที่ตามหาป้ายเลข ${qn} (${list.length})`;
+  list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  $("lost-results").innerHTML = list.map(l => `<article class="lost-card">
+      <div>${plateHtml(l.prefix, l.number, l.province || "ไม่ระบุจังหวัด")}<span class="tag">ตามหาอยู่</span></div>
+      <div class="meta">ประกาศ ${ago(l.createdAt)}${l.area ? " · หายแถว " + esc(l.area) : ""}</div>
+      <div class="acts">
+        <button class="pri" data-ifound="${esc(l.id)}">ผมเจอป้ายนี้ → แจ้ง</button>
+        ${contactReveal(l.id, l.contact, "ดูช่องทางติดต่อเจ้าของ")}
+      </div></article>`).join("");
+}
+$("lost-results").addEventListener("click", e => {
+  const ct = e.target.closest("[data-contact]");
+  if (ct){ shownContact.add(ct.dataset.contact); renderLost(); return; }
+  const f = e.target.closest("[data-ifound]");
+  if (f){
+    const l = current.lost.find(x => x.id === f.dataset.ifound); if (!l) return;
+    $("r-num").value = l.number; $("r-prefix").value = l.prefix || ""; $("r-prov").value = l.province || "";
+    location.hash = "#report/1";
+  }
+});
 
 async function getPhoto(id){
   if (photoCache.has(id)) return photoCache.get(id);
@@ -586,7 +681,7 @@ async function getPhoto(id){
 async function loadThumb(btn){
   try{
     const url = await getPhoto(btn.dataset.photo);
-    btn.innerHTML = url ? `<img src="${url}" alt="รูปป้ายทะเบียนที่เก็บได้" loading="lazy">` : `<span>ไม่มีรูป</span>`;
+    btn.innerHTML = url ? `<img src="${esc(url)}" alt="รูปป้ายทะเบียนที่เก็บได้" loading="lazy">` : `<span>ไม่มีรูป</span>`;
   }catch{ btn.innerHTML = `<span>โหลดรูปไม่ได้</span>`; }
 }
 $("results").addEventListener("click", async e => {
@@ -638,7 +733,7 @@ function renderTracked(){
   box.classList.toggle("hidden", !list.length);
   if (!list.length){ document.title = baseTitle; return; }
   let fresh = 0;
-  box.innerHTML = `<h2>🔔 ป้ายที่คุณฝากตามหา</h2>` + list.map(t => {
+  box.innerHTML = `<h2>ป้ายที่คุณฝากตามหา</h2>` + list.map(t => {
     const rows = trackRows.get(t.n), waiting = rows?.filter(r => r.status !== "returned") || [];
     const newOnes = waiting.filter(r => !t.seen.includes(r.id));
     fresh += newOnes.length;
@@ -654,7 +749,12 @@ function renderTracked(){
 }
 $("tracked").addEventListener("click", e => {
   const x = e.target.closest("[data-untrack]");
-  if (x){ if (confirm("เลิกตามหาเลขนี้?")){ tracked.remove(x.dataset.untrack); syncTracking(); } return; }
+  if (x){
+    const t = tracked.all().find(t => t.n === x.dataset.untrack);
+    if (!confirm(t?.lostId ? "เลิกตามหาและปิดประกาศเลขนี้?" : "เลิกตามหาเลขนี้?")) return;
+    if (t?.lostId) updateDoc(doc(lostCol, t.lostId), { status: "closed", closedAt: Date.now() }).catch(() => {});
+    tracked.remove(x.dataset.untrack); syncTracking(); return;
+  }
   const o = e.target.closest("[data-open]");
   if (o){ const t = tracked.all().find(t => t.n === o.dataset.open); if (t) location.hash = trackLink(t).split("#")[1]; }
 });
@@ -673,9 +773,30 @@ function openSaved(t){
 }
 $("saved-close").onclick = () => $("saved").close();
 const searchTrack = () => ({ n: digits($("s-num").value), p: normPrefix($("s-prefix").value).slice(0,4), v: $("s-prov").value.trim().slice(0,40) });
+function startTracking(t){
+  tracked.add(t); syncTracking(); markSeen(t.n, current.key === t.n ? current.rows : []); render(); openSaved(t);
+}
 $("save-btn").onclick = () => {
   const t = searchTrack(); if (!t.n) return;
-  tracked.add(t); syncTracking(); markSeen(t.n, current.key === t.n ? current.rows : []); render(); openSaved(t);
+  $("lost-plate").innerHTML = plateHtml(t.p, t.n, t.v || "ไม่ระบุจังหวัด");
+  setStatus($("lost-status"), ""); $("lostdlg").showModal();
+};
+$("lost-close").onclick = () => $("lostdlg").close();
+$("lost-quiet").onclick = () => { $("lostdlg").close(); startTracking(searchTrack()); };
+$("lost-go").onclick = async () => {
+  const t = searchTrack(); if (!t.n) return;
+  if (!ready) return setStatus($("lost-status"), "ยังเชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง", "bad");
+  $("lost-go").disabled = true; setStatus($("lost-status"), `<span class="spin"></span>กำลังประกาศ…`);
+  try{
+    const ref = doc(lostCol);
+    await setDoc(ref, { prefix: t.p, number: t.n, numberKey: t.n, province: t.v,
+      area: $("lost-area").value.trim().slice(0,120), contact: $("lost-contact").value.trim().slice(0,80),
+      status: "looking", createdAt: Date.now(), uid: auth.currentUser.uid });
+    t.lostId = ref.id;
+    $("lostdlg").close(); $("lost-area").value = ""; $("lost-contact").value = "";
+    startTracking(t);
+  }catch{ setStatus($("lost-status"), "ประกาศไม่สำเร็จ ลองอีกครั้ง", "bad"); }
+  finally{ $("lost-go").disabled = false; }
 };
 $("saved-btn").onclick = () => { const n = digits($("s-num").value); const t = tracked.all().find(x => x.n === n); if (t) openSaved(t); };
 
@@ -784,6 +905,20 @@ $("paste-go").onclick = () => {
 };
 $("photo3").addEventListener("change", onPhoto);
 
+let ownerTimer;
+async function checkOwners(){
+  const n = digits($("r-num").value), box = $("owner-hint");
+  if (!ready || !n){ box.classList.add("hidden"); return; }
+  try{
+    const snap = await getDocs(lostByNumber(n));
+    const c = toRows(snap).filter(l => l.status === "looking").length;
+    if (digits($("r-num").value) !== n) return;
+    box.innerHTML = c ? `<b>มีเจ้าของตามหาเลข ${esc(n)} อยู่ ${c} คน</b><br>ส่งแจ้งแล้วจะเห็นช่องทางติดต่อเจ้าของ` : "";
+    box.classList.toggle("hidden", !c);
+  }catch{ box.classList.add("hidden"); }
+}
+$("r-num").addEventListener("input", () => { clearTimeout(ownerTimer); ownerTimer = setTimeout(checkOwners, 400); });
+
 $("r2-next").onclick = () => {
   if (!digits($("r-num").value)){ setStatus($("ocr-status"), "ใส่เลขทะเบียนก่อน อย่างน้อยตัวเลข", "bad"); $("r-num").focus(); return; }
   location.hash = "#report/3";
@@ -874,11 +1009,11 @@ function resetReport(){
 const SHOW_WAITING_FROM = 20;
 const stats = { waiting: null, returned: null };
 function renderStats(){
-  const fmt = n => n.toLocaleString("th-TH"), parts = [];
-  if (stats.waiting >= SHOW_WAITING_FROM) parts.push(`<span class="stat"><b>${fmt(stats.waiting)}</b> ป้ายรอเจ้าของ</span>`);
-  if (stats.returned > 0) parts.push(`<span class="stat ok"><b>${fmt(stats.returned)}</b> ป้ายคืนเจ้าของแล้ว</span>`);
-  if (!parts.length) parts.push(`<span class="stat">✓ ฟรี ไม่ต้องสมัคร</span>`, `<span class="stat">✓ ไม่เก็บข้อมูลเจ้าของ</span>`);
-  $("stats").innerHTML = parts.join("");
+  const fmt = n => n.toLocaleString("th-TH");
+  $("stats").innerHTML =
+      stats.waiting >= SHOW_WAITING_FROM ? `<b>${fmt(stats.waiting)}</b>ป้ายรอเจ้าของ`
+    : stats.returned > 0 ? `<span class="ok"><b>${fmt(stats.returned)}</b>คืนเจ้าของแล้ว</span>`
+    : "";
 }
 function loadStats(){
   const count = status => getCountFromServer(query(plateCol, where("status","==",status))).then(s => s.data().count);
@@ -890,7 +1025,7 @@ function loadStats(){
 route();
 signInAnonymously(auth).then(() => {
   ready = true; syncTracking();
-  if (screen === "find") runSearch();
+  if (screen === "home") runSearch();
   loadStats();
 }).catch(() => { setStatus($("find-status"), "เชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ตแล้วรีเฟรชหน้า", "bad"); });
 </script>
