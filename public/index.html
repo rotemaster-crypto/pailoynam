@@ -673,13 +673,39 @@ function render(){
 
   if (!list.length){
     box.innerHTML = qn
-      ? `<div class="empty"><b>ยังไม่มีคนแจ้งป้ายเลข ${esc(qn)}</b>${isTracked ? "ระบบเฝ้าให้อยู่ มีคนแจ้งเมื่อไหร่ จะขึ้นที่หน้าแรกทันที" : "กด “ประกาศป้ายหาย / ฝากตามหาเลขนี้” ด้านบน มีคนแจ้งเมื่อไหร่จะขึ้นให้ทันที"}</div>`
+      ? `<div class="empty"><b>ยังไม่มีคนแจ้งป้ายเลข ${esc(qn)}</b>${isTracked ? "ระบบเฝ้าให้อยู่ มีคนแจ้งเมื่อไหร่ จะขึ้นที่หน้าแรกทันที" : "กด “ประกาศป้ายหาย / ฝากตามหาเลขนี้” ด้านบน มีคนแจ้งเมื่อไหร่จะขึ้นให้ทันที"}</div><div id="near-box"></div>`
       : `<div class="empty"><b>ยังไม่มีป้ายในระบบ</b>ใครเก็บป้ายได้ กด “ผมเก็บป้ายได้” ด้านบน</div>`;
+    if (qn.length >= 3) showNear(qn, qp);
     return;
   }
   box.innerHTML = list.map(p => cardHtml(p, qp)).join("");
   box.querySelectorAll("[data-photo]").forEach(loadThumb);
   if (qn && screen === "home") markSeen(qn, list);
+}
+
+/* ไม่เจอเลขตรง: หาเลขใกล้เคียง (ต่าง 1 หลัก หรือสลับหลักติดกัน) กันพิมพ์ผิด/อ่านป้ายผิด */
+function nearNumbers(n){
+  const d = n.split(""), out = new Set();
+  d.forEach((ch, i) => { for (let c = 0; c < 10; c++) if (String(c) !== ch){ const x = [...d]; x[i] = String(c); out.add(x.join("")); } });
+  for (let i = 0; i < d.length - 1; i++) if (d[i] !== d[i+1]){ const x = [...d]; [x[i], x[i+1]] = [x[i+1], x[i]]; out.add(x.join("")); }
+  return [...out].filter(x => x.length === 1 || x[0] !== "0");
+}
+const nearCache = new Map();
+function loadNear(n){
+  if (!nearCache.has(n)) nearCache.set(n, (async () => {
+    const cands = nearNumbers(n), rows = [];
+    for (let i = 0; i < cands.length; i += 30)
+      rows.push(...toRows(await getDocs(query(plateCol, where("numberKey", "in", cands.slice(i, i + 30)), limit(10)))));
+    return rows.filter(r => r.status !== "returned").slice(0, 10);
+  })().catch(() => { nearCache.delete(n); return []; }));
+  return nearCache.get(n);
+}
+async function showNear(n, qp){
+  const list = await loadNear(n), box = $("near-box");
+  if (!box || !list.length || digits($("s-num").value) !== n) return;
+  box.innerHTML = `<div class="owner-hint" style="margin:0 0 12px"><b>มีผู้พบทะเบียนใกล้เคียง</b> ลองตรวจสอบ เผื่อพิมพ์ผิด</div>`
+    + `<div class="results">${list.map(p => cardHtml(p, qp)).join("")}</div>`;
+  box.querySelectorAll("[data-photo]").forEach(loadThumb);
 }
 
 function contactReveal(id, contact, label){
