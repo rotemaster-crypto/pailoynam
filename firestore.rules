@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    // ป้ายที่แจ้ง: ทุกคนอ่านได้ / คนที่เปิดแอป (anonymous) แจ้งได้ / แก้ได้แค่เปลี่ยนสถานะเป็น "คืนแล้ว" / ห้ามลบ
+    match /plates/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['prefix','number','numberKey','province','lat','lng',
+             'pickupLat','pickupLng','foundNote','pickupType','pickupPlace','contact','status','createdAt','uid'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.number is string
+        && request.resource.data.number.matches('^[0-9]{1,4}$')
+        && request.resource.data.numberKey == request.resource.data.number
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.prefix is string && request.resource.data.prefix.size() <= 4
+        && request.resource.data.province is string && request.resource.data.province.size() <= 40
+        && request.resource.data.foundNote is string && request.resource.data.foundNote.size() <= 200
+        && request.resource.data.pickupType is string && request.resource.data.pickupType.size() <= 40
+        && request.resource.data.pickupPlace is string && request.resource.data.pickupPlace.size() <= 200
+        && request.resource.data.contact is string && request.resource.data.contact.size() <= 80
+        && request.resource.data.createdAt is int
+        && request.resource.data.createdAt > request.time.toMillis() - 600000
+        && request.resource.data.createdAt < request.time.toMillis() + 600000;
+      allow update: if request.auth != null
+        && resource.data.status == 'waiting'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','returnedAt'])
+        && request.resource.data.status == 'returned'
+        && request.resource.data.returnedAt is int;
+      allow delete: if false;
+    }
+
+    // รูปป้าย (ย่อแล้ว เก็บเป็นข้อความ ไม่ต้องใช้ Storage)
+    match /photos/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['dataUrl'])
+        && request.resource.data.dataUrl is string
+        && request.resource.data.dataUrl.matches('^data:image/jpeg;base64,.*')
+        && request.resource.data.dataUrl.size() < 400000;
+      allow update, delete: if false;
+    }
+  }
+}

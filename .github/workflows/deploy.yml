@@ -1,0 +1,22 @@
+# push ขึ้น main แล้ว deploy ขึ้น Firebase อัตโนมัติ
+# ต้องตั้ง secret FIREBASE_SERVICE_ACCOUNT (JSON ของ service account ที่มี role "Firebase Admin")
+name: Deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency: deploy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Deploy hosting + rules
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx -y firebase-tools@latest deploy --only hosting,firestore --non-interactive
