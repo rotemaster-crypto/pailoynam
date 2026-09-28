@@ -321,7 +321,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <div id="done-owners" class="hidden" style="margin-top:16px"></div>
     <div class="grow"></div>
     <div class="bar">
-      <a class="btn line" id="done-line" target="_blank" rel="noopener">แชร์เข้ากลุ่ม LINE</a>
+      <button type="button" class="btn line" id="done-line">แชร์เข้ากลุ่ม LINE</button>
       <div class="row2">
         <a class="btn alt sm" href="#report/1">แจ้งป้ายถัดไป</a>
         <a class="btn alt sm" href="#">กลับหน้าแรก</a>
@@ -369,8 +369,9 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <h2 id="saved-h">ฝากตามหาแล้ว</h2>
     <p>เปิดเว็บนี้ครั้งหน้า จะเห็นสถานะที่หน้าแรกทันที ถ้ามีคนแจ้งเลขนี้จะขึ้นว่า <b>“เจอแล้ว”</b></p>
     <p><b>ส่งลิงก์เข้าไลน์ตัวเองไว้</b> จะได้กดเช็กได้ตลอด ไม่หายแม้เปลี่ยนเครื่อง</p>
-    <a class="btn line" id="saved-line" target="_blank" rel="noopener">ส่งลิงก์เข้า LINE</a>
-    <button type="button" class="btn alt" id="saved-share">แชร์ / คัดลอกลิงก์</button>
+    <button type="button" class="btn line" id="saved-line">ส่งลิงก์เข้า LINE</button>
+    <button type="button" class="btn alt" id="saved-copy">คัดลอกลิงก์</button>
+    <p class="small">ส่งเข้าตัวเอง: ใน LINE เลือก “Keep Memo” ในรายชื่อ</p>
     <div class="status" id="saved-status"></div>
   </div>
   <button class="x" id="saved-close">ปิด</button>
@@ -437,7 +438,24 @@ function setPlate(pre, prefix, number, province){
 const setStatus = (el, msg, kind) => { el.innerHTML = msg || ""; el.className = "status" + (kind ? " "+kind : ""); };
 const plateHtml = (p, n, v, cls="") => `<span class="mini-plate ${cls}">${esc(p||"")} ${esc(n)}<small>${esc(v||"ไม่ทราบจังหวัด")}</small></span>`;
 const siteUrl = () => location.origin + location.pathname;
-const lineShare = text => "https://line.me/R/share?text=" + encodeURIComponent(text);
+/* แชร์เข้า LINE: ในแอป LINE ใช้ลิงก์ line.me (LINE รับเอง) · มือถือใช้เมนูแชร์ของเครื่อง · คอมใช้ปุ่มแชร์ทางการของ LINE */
+const inLineApp = / Line\//i.test(navigator.userAgent);
+const isTouch = matchMedia("(pointer:coarse)").matches;
+async function shareToLine(text, url){
+  if (inLineApp){ location.href = "https://line.me/R/share?text=" + encodeURIComponent(text); return; }
+  if (isTouch && navigator.share){
+    try { await navigator.share({ text }); return; } catch(err){ if (err.name === "AbortError") return; }
+  }
+  window.open("https://social-plugins.line.me/lineit/share?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text), "_blank", "noopener");
+}
+async function copyText(text, statusEl){
+  try { await navigator.clipboard.writeText(text); setStatus(statusEl, "✓ คัดลอกลิงก์แล้ว", "good"); }
+  catch {
+    const ta = Object.assign(document.createElement("textarea"), { value: text }); document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy"); ta.remove();
+    setStatus(statusEl, ok ? "✓ คัดลอกลิงก์แล้ว" : esc(text), ok ? "good" : "");
+  }
+}
 
 let ready = false, myPos = null, sortMode = "new";
 const photoCache = new Map(), shownContact = new Set();
@@ -500,7 +518,8 @@ const onEnter = {
     const p = lastDone;
     $("done-plate").innerHTML = plateHtml(p.prefix, p.number, p.province, "lg");
     showOwners(p.number);
-    $("done-line").href = lineShare(`📢 มีคนเก็บป้ายทะเบียน ${p.prefix} ${p.number} ${p.province} ได้ เจ้าของดูรูปและนำทางไปรับได้ที่ ${siteUrl()}#find?n=${p.number}`);
+    const shareUrl = siteUrl() + "?q=" + p.number;
+    $("done-line").onclick = () => shareToLine(`📢 มีคนเก็บป้ายทะเบียน ${p.prefix} ${p.number} ${p.province} ได้ เจ้าของดูรูปและนำทางไปรับได้ที่ ${shareUrl}`, shareUrl);
   }
 };
 async function showOwners(n){
@@ -715,8 +734,8 @@ const tracked = {
   remove(n){ this.save(this.all().filter(x => x.n !== n)); }
 };
 const trackUnsubs = new Map(), trackRows = new Map(), alerted = new Set(), baseTitle = document.title;
-const trackLink = t => siteUrl() + "#find?" +
-  new URLSearchParams(Object.fromEntries(Object.entries({n:t.n, p:t.p, v:t.v}).filter(([,v]) => v)));
+const trackParams = t => new URLSearchParams(Object.fromEntries(Object.entries({n:t.n, p:t.p, v:t.v}).filter(([,v]) => v)));
+const trackLink = t => siteUrl() + "?" + trackParams(t);
 
 function syncTracking(){
   const list = tracked.all(), keys = new Set(list.map(t => t.n));
@@ -760,19 +779,15 @@ $("tracked").addEventListener("click", e => {
     tracked.remove(x.dataset.untrack); syncTracking(); return;
   }
   const o = e.target.closest("[data-open]");
-  if (o){ const t = tracked.all().find(t => t.n === o.dataset.open); if (t) location.hash = trackLink(t).split("#")[1]; }
+  if (o){ const t = tracked.all().find(t => t.n === o.dataset.open); if (t) location.hash = "#find?" + trackParams(t); }
 });
 
 function openSaved(t){
   const url = trackLink(t);
   const msg = `ตามหาป้ายทะเบียน ${t.p||""} ${t.n} ${t.v||""}\nกดเช็กว่ามีคนเจอหรือยัง: ${url}`;
-  $("saved-line").href = lineShare(msg);
   setStatus($("saved-status"), "");
-  $("saved-share").onclick = async () => {
-    if (navigator.share){ try { await navigator.share({title:"ตามหาป้ายทะเบียน", text:msg}); return; } catch(err){ if (err.name === "AbortError") return; } }
-    try { await navigator.clipboard.writeText(url); setStatus($("saved-status"), "คัดลอกลิงก์แล้ว", "good"); }
-    catch { setStatus($("saved-status"), esc(url)); }
-  };
+  $("saved-line").onclick = () => shareToLine(msg, url);
+  $("saved-copy").onclick = () => copyText(url, $("saved-status"));
   $("saved").showModal();
 }
 $("saved-close").onclick = () => $("saved").close();
@@ -804,11 +819,18 @@ $("lost-go").onclick = async () => {
 };
 $("saved-btn").onclick = () => { const n = digits($("s-num").value); const t = tracked.all().find(x => x.n === n); if (t) openSaved(t); };
 
-/* เปิดจากลิงก์ติดตาม #find?n=1234&p=กข&v=จังหวัด */
+/* เปิดจากลิงก์: ?n=1234&p=กข&v=จังหวัด (ฝากตามหา), ?q=1234 (ค้นอย่างเดียว), #find?n= (ภายในแอป) */
 function openFromHash(){
   const h = location.hash, i = h.indexOf("?");
-  if (!h.startsWith("#find") || i < 0) return;
-  const q = new URLSearchParams(h.slice(i+1)), n = digits(q.get("n"));
+  const search = new URLSearchParams(location.search);
+  if (search.get("n") || search.get("q")){
+    // ลบพารามิเตอร์ออกจากแถบที่อยู่ กันฝากตามหาซ้ำตอนรีเฟรช
+    history.replaceState(null, "", location.pathname + location.hash);
+    if (search.get("q") && !search.get("n")){ const qn = digits(search.get("q")); if (qn) setPlate("s", "", qn.slice(0,4), null); return; }
+  }
+  const q = search.get("n") ? search : (h.startsWith("#find") && i >= 0 ? new URLSearchParams(h.slice(i+1)) : null);
+  if (!q) return;
+  const n = digits(q.get("n")).slice(0,4);
   if (!n) return;
   const t = { n, p: normPrefix(q.get("p")).slice(0,4), v: (q.get("v")||"").slice(0,40) };
   if (!tracked.all().some(x => x.n === n)) { tracked.add(t); syncTracking(); }
