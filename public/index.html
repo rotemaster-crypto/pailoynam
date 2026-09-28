@@ -216,7 +216,6 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
   <main class="screen" id="s-home">
     <header class="top">
       <div class="brand">ป้ายลอยน้ำ<small>ป้ายทะเบียนหลุดหายช่วงน้ำท่วม เจอแล้วแจ้ง หายแล้วค้น</small></div>
-      <div class="count" id="stats"></div>
     </header>
 
     <nav class="tabs" role="tablist">
@@ -406,7 +405,7 @@ const firebaseConfig = {
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, onSnapshot, query, where, orderBy, limit, getCountFromServer }
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, onSnapshot, query, where, orderBy, limit }
   from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -503,7 +502,7 @@ async function showOwners(n){
   try{
     const list = toRows(await getDocs(lostByNumber(n))).filter(l => l.status === "looking");
     if (!list.length) return;
-    box.innerHTML = `<div class="owner-hint" style="margin:0 0 8px"><b>มีเจ้าของตามหาเลขนี้อยู่ ${list.length} คน</b> ติดต่อบอกได้เลย</div>` +
+    box.innerHTML = `<div class="owner-hint" style="margin:0 0 8px"><b>มีเจ้าของกำลังตามหาเลขนี้อยู่</b> ติดต่อบอกได้เลย</div>` +
       list.map(l => `<div class="lost-card" style="margin-top:8px"><div class="meta">${l.area ? "หายแถว " + esc(l.area) : "ไม่ระบุจุดที่หาย"}</div>
         ${l.contact ? `<div class="contact-box">ติดต่อ <b>${esc(l.contact)}</b></div>` : `<div class="meta">เจ้าของไม่ได้ใส่เบอร์ แต่จะเห็นป้ายที่คุณแจ้งทันที</div>`}</div>`).join("");
     box.classList.remove("hidden");
@@ -651,7 +650,7 @@ function renderLost(){
   const qn = digits($("s-num").value), list = current.lost.filter(l => l.status === "looking");
   $("lost-wrap").classList.toggle("hidden", !qn || !list.length);
   if (!qn || !list.length) return;
-  $("lost-title").textContent = `คนที่ตามหาป้ายเลข ${qn} (${list.length})`;
+  $("lost-title").textContent = `คนที่ตามหาป้ายเลข ${qn}`;
   list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   $("lost-results").innerHTML = list.map(l => `<article class="lost-card">
       <div>${plateHtml(l.prefix, l.number, l.province || "ไม่ระบุจังหวัด")}<span class="tag">ตามหาอยู่</span></div>
@@ -695,7 +694,6 @@ $("results").addEventListener("click", async e => {
     done.disabled = true;
     try {
       await updateDoc(doc(fs,"plates",done.dataset.done), {status:"returned", returnedAt:Date.now()});
-      if (stats.waiting != null){ stats.waiting--; stats.returned++; renderStats(); }
     }
     catch { done.disabled = false; alert("บันทึกไม่สำเร็จ ลองอีกครั้ง"); }
   }
@@ -913,7 +911,7 @@ async function checkOwners(){
     const snap = await getDocs(lostByNumber(n));
     const c = toRows(snap).filter(l => l.status === "looking").length;
     if (digits($("r-num").value) !== n) return;
-    box.innerHTML = c ? `<b>มีเจ้าของตามหาเลข ${esc(n)} อยู่ ${c} คน</b><br>ส่งแจ้งแล้วจะเห็นช่องทางติดต่อเจ้าของ` : "";
+    box.innerHTML = c ? `<b>มีเจ้าของกำลังตามหาเลข ${esc(n)} อยู่</b><br>ส่งแจ้งแล้วจะเห็นช่องทางติดต่อเจ้าของ` : "";
     box.classList.toggle("hidden", !c);
   }catch{ box.classList.add("hidden"); }
 }
@@ -990,7 +988,6 @@ $("submit-btn").onclick = async () => {
     await setDoc(ref, data);
     lastDone = data;
     resetReport();
-    stats.waiting++; renderStats();
     location.replace("#report/done");
   }catch{ setStatus(st, "ส่งไม่สำเร็จ ลองกดอีกครั้ง", "bad"); }
   finally{ $("submit-btn").disabled = false; }
@@ -1005,28 +1002,11 @@ function resetReport(){
   $("submit-status").classList.add("hidden");
 }
 
-/* ================= ตัวเลขหน้าแรก: ตัวเลขจริงจากฐานข้อมูลเท่านั้น ยังน้อยอยู่ก็ไม่โชว์ ================= */
-const SHOW_WAITING_FROM = 20;
-const stats = { waiting: null, returned: null };
-function renderStats(){
-  const fmt = n => n.toLocaleString("th-TH");
-  $("stats").innerHTML =
-      stats.waiting >= SHOW_WAITING_FROM ? `<b>${fmt(stats.waiting)}</b>ป้ายรอเจ้าของ`
-    : stats.returned > 0 ? `<span class="ok"><b>${fmt(stats.returned)}</b>คืนเจ้าของแล้ว</span>`
-    : "";
-}
-function loadStats(){
-  const count = status => getCountFromServer(query(plateCol, where("status","==",status))).then(s => s.data().count);
-  Promise.all([count("waiting"), count("returned")])
-    .then(([w, r]) => { stats.waiting = w; stats.returned = r; renderStats(); }).catch(() => {});
-}
-
 /* ================= เริ่มทำงาน ================= */
 route();
 signInAnonymously(auth).then(() => {
   ready = true; syncTracking();
   if (screen === "home") runSearch();
-  loadStats();
 }).catch(() => { setStatus($("find-status"), "เชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ตแล้วรีเฟรชหน้า", "bad"); });
 </script>
 </body>
