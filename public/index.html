@@ -418,7 +418,7 @@ function route(){
 }
 const onEnter = {
   home: () => renderTracked(),
-  find: () => { runSearch(); if (!digits($("s-num").value)) setTimeout(() => $("s-num").focus(), 250); },
+  find: () => { current.key = null; runSearch(); if (!digits($("s-num").value)) setTimeout(() => $("s-num").focus(), 250); },
   r3: () => { if (!foundPos && !gpsBusy) grabGps(); },
   done: () => {
     const p = lastDone;
@@ -552,7 +552,7 @@ function render(){
   }
   box.innerHTML = list.map(p => cardHtml(p, qp)).join("");
   box.querySelectorAll("[data-photo]").forEach(loadThumb);
-  if (qn) markSeen(qn, list);
+  if (qn && screen === "find") markSeen(qn, list);
 }
 
 async function getPhoto(id){
