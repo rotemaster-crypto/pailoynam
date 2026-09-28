@@ -186,6 +186,11 @@ label.f{display:block;font-weight:500;font-size:.85rem;margin:14px 0 4px;color:v
 .inp{width:100%;border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:10px 14px;min-height:46px;font-size:16px}
 .inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opts.four{grid-template-columns:repeat(4,1fr);gap:6px}
+.opts.four .opt{min-height:44px;padding:6px 4px;font-size:.85rem}
+.photo-row{display:flex;gap:8px;align-items:center;margin-top:12px}
+.photo-row .btn{flex:1}
+.thumb-prev{width:52px;height:44px;object-fit:cover;border-radius:8px;flex:none;border:1px solid var(--line-2)}
 .opt{display:flex;align-items:center;justify-content:center;text-align:center;border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:8px 10px;min-height:56px;cursor:pointer;font-size:.9rem;line-height:1.3}
 .opt[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600;box-shadow:0 0 0 1px var(--accent)}
 .done-ico{display:grid;place-items:center;width:64px;height:64px;margin:24px auto 0;border-radius:50%;background:var(--ok-soft);color:var(--ok)}
@@ -230,7 +235,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <button class="back hidden" id="back" aria-label="ย้อนกลับ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
     <div class="ttl" id="ttl">ป้ายลอยน้ำ</div>
   </header>
-  <div class="steps hidden" id="steps" aria-hidden="true"><i></i><i></i></div>
+  <div class="steps hidden" id="steps" aria-hidden="true"></div>
 
   <!-- ===== หน้าแรก = ค้นหา (หน้าตาแบบแรก) ===== -->
   <main class="screen" id="s-home">
@@ -240,7 +245,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
 
     <nav class="tabs" role="tablist">
       <a role="tab" aria-selected="true" href="#">ป้ายผมหาย</a>
-      <a role="tab" aria-selected="false" href="#report/1">ผมเก็บป้ายได้</a>
+      <a role="tab" aria-selected="false" href="#report">ผมเก็บป้ายได้</a>
     </nav>
 
     <div class="panel hidden" id="tracked" style="margin-bottom:16px"></div>
@@ -275,10 +280,10 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <p class="notice" style="margin-bottom:24px">ผู้ที่เก็บป้ายของคนอื่นได้ควรส่งคืนเจ้าของหรือฝากสถานีตำรวจ ถ้าหาไม่เจอ ทำป้ายใหม่ได้ที่สำนักงานขนส่งโดยไม่ต้องแจ้งความ สายด่วนกรมการขนส่งทางบก 1584</p>
   </main>
 
-  <!-- ===== แจ้ง 1: เลขป้าย + รูป ===== -->
+  <!-- ===== แจ้งป้ายที่เจอ: หน้าเดียวจบ ===== -->
   <main class="screen fit hidden" id="s-r1">
-    <h2 class="q">เลขทะเบียนป้ายที่เจอ</h2>
-    <div class="plate" style="margin-top:8px">
+    <label class="f" for="r-plate" style="margin-top:4px">เลขทะเบียนป้ายที่เจอ</label>
+    <div class="plate">
       <input class="p-one" id="r-plate" placeholder="เช่น 1กข 1234" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" aria-label="เลขทะเบียน พิมพ์รวมกันได้ เช่น 1กข 1234">
       <input type="hidden" id="r-prefix"><input type="hidden" id="r-num">
       <input class="p-prov" id="r-prov" list="provinces" placeholder="จังหวัด" aria-label="จังหวัด">
@@ -286,36 +291,29 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <div class="parsed" id="r-parsed"></div>
     <div class="owner-hint hidden" id="owner-hint"></div>
 
-    <label class="f">รูปป้าย (ไม่บังคับ แต่ช่วยให้เจ้าของมั่นใจ)</label>
-    <img class="preview hidden" id="r-preview" alt="รูปป้ายที่แนบ">
-    <div class="row2">
-      <label class="btn alt sm">ถ่ายรูป<input type="file" id="photo" accept="image/*" capture="environment" class="hidden"></label>
-      <label class="btn alt sm">เลือกจากคลังภาพ<input type="file" id="photo2" accept="image/*" class="hidden"></label>
+    <div class="photo-row">
+      <img class="thumb-prev hidden" id="r-preview" alt="รูปป้ายที่แนบ">
+      <label class="btn alt sm">ถ่ายรูปป้าย<input type="file" id="photo" accept="image/*" capture="environment" class="hidden"></label>
+      <label class="btn alt sm">คลังภาพ<input type="file" id="photo2" accept="image/*" class="hidden"></label>
     </div>
-    <div class="status" id="ocr-status"></div>
-    <div class="grow"></div>
-    <div class="bar"><button type="button" class="btn" id="r1-next">ถัดไป</button></div>
-  </main>
+    <div class="status" id="ocr-status" style="margin-top:4px"></div>
 
-  <!-- ===== แจ้ง 2: จุดรับ / ติดต่อ + ปักหมุด ===== -->
-  <main class="screen fit hidden" id="s-r2">
-    <h2 class="q">เจ้าของรับคืนได้ที่ไหน</h2>
-    <div class="opts" id="pickup-opts" role="radiogroup" aria-label="จุดรับคืน" style="margin-top:8px">
-      <button type="button" class="opt" role="radio" aria-checked="false" data-v="สถานีตำรวจ">สถานีตำรวจ</button>
-      <button type="button" class="opt" role="radio" aria-checked="false" data-v="จุดกู้ภัย">จุดกู้ภัย</button>
-      <button type="button" class="opt" role="radio" aria-checked="false" data-v="สำนักงานเขต/อบต.">เขต / อบต.</button>
+    <label class="f" style="margin-top:8px">รับคืนได้ที่</label>
+    <div class="opts four" id="pickup-opts" role="radiogroup" aria-label="จุดรับคืน">
+      <button type="button" class="opt" role="radio" aria-checked="false" data-v="สถานีตำรวจ">ตำรวจ</button>
+      <button type="button" class="opt" role="radio" aria-checked="false" data-v="จุดกู้ภัย">กู้ภัย</button>
+      <button type="button" class="opt" role="radio" aria-checked="false" data-v="สำนักงานเขต/อบต.">เขต/อบต.</button>
       <button type="button" class="opt" role="radio" aria-checked="false" data-v="ถือไว้เอง">ถือไว้เอง</button>
     </div>
-    <div id="pickup-more" class="hidden">
-      <label class="f" for="r-place" id="r-place-lbl">ชื่อสถานที่รับ</label>
-      <input class="inp" id="r-place" placeholder="เช่น สภ.ลาดกระบัง" enterkeyhint="next">
-      <label class="f" for="r-contact" id="r-contact-lbl">เบอร์หรือไลน์ติดต่อ (ไม่บังคับ)</label>
-      <input class="inp" id="r-contact" inputmode="tel" placeholder="คนที่ค้นเลขนี้จะเห็น" enterkeyhint="done">
-      <button type="button" class="loc" id="pin-btn" style="margin-top:12px">
-        <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-        <span><b id="pin-title">ปักหมุดจุดรับบนแผนที่</b><span id="pin-sub">เจ้าของกดนำทางมาที่หมุดได้เลย (ไม่บังคับ)</span></span>
-      </button>
+    <div class="row2" style="margin-top:8px">
+      <input class="inp" id="r-place" placeholder="ชื่อสถานที่ เช่น สภ.ลาดกระบัง" aria-label="ชื่อสถานที่รับ" enterkeyhint="next">
+      <input class="inp" id="r-contact" inputmode="tel" placeholder="เบอร์/ไลน์ (ไม่บังคับ)" aria-label="เบอร์หรือไลน์ติดต่อ" enterkeyhint="done">
     </div>
+    <button type="button" class="loc" id="pin-btn" style="margin-top:8px">
+      <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+      <span><b id="pin-title">ปักหมุดจุดรับบนแผนที่</b><span id="pin-sub">เจ้าของกดนำทางมาที่หมุดได้เลย (ไม่บังคับ)</span></span>
+    </button>
+
     <div class="grow"></div>
     <div class="bar">
       <div class="status hidden" id="submit-status" style="margin:0;text-align:center"></div>
@@ -337,7 +335,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
         <button type="button" class="btn fb" id="done-fb">แชร์ไป Facebook</button>
       </div>
       <div class="row2">
-        <a class="btn alt sm" href="#report/1">แจ้งป้ายถัดไป</a>
+        <a class="btn alt sm" href="#report">แจ้งป้ายถัดไป</a>
         <a class="btn alt sm" href="#">กลับหน้าแรก</a>
       </div>
     </div>
@@ -502,8 +500,7 @@ function getPosition(){
 /* ================= หน้าจอ: ใช้ hash เพื่อให้ปุ่มย้อนกลับของมือถือทำงาน ================= */
 const SCREENS = {
   home: { ttl: "ป้ายลอยน้ำ", back: null },
-  r1:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 1 จาก 2", back: "#", step: 1 },
-  r2:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 2 จาก 2", back: "#report/1", step: 2 },
+  r1:   { ttl: "แจ้งป้ายที่เจอ", sub: "กรอกหน้าเดียวจบ", back: "#" },
   done: { ttl: "แจ้งเรียบร้อย", back: null }
 };
 let screen = "home", lastDone = null;
@@ -515,7 +512,6 @@ function route(){
     s = st === "done" ? "done" : "r" + st;
     if (!SCREENS[s]) s = "r1";
     // เข้าขั้นกลางทางโดยไม่มีข้อมูล (เช่น รีเฟรช) ให้เริ่มใหม่
-    if (s === "r2" && !digits($("r-num").value)) return location.replace("#report/1");
     if (s === "done" && !lastDone) return location.replace("#");
   }
   if (s === "home") openFromHash();
@@ -713,7 +709,7 @@ $("lost-results").addEventListener("click", e => {
   if (f){
     const l = current.lost.find(x => x.id === f.dataset.ifound); if (!l) return;
     setPlate("r", l.prefix, l.number, l.province || "");
-    location.hash = "#report/1";
+    location.hash = "#report";
   }
 });
 
@@ -916,7 +912,7 @@ async function onPhoto(e){
   try { photoDataUrl = await compress(f); }
   catch { setStatus($("ocr-status"), "เปิดรูปนี้ไม่ได้ ลองถ่ายใหม่", "bad"); return; }
   $("r-preview").src = photoDataUrl; $("r-preview").classList.remove("hidden");
-  setStatus($("ocr-status"), "✓ แนบรูปแล้ว", "good");
+  setStatus($("ocr-status"), "");
 }
 $("photo").addEventListener("change", onPhoto);
 $("photo2").addEventListener("change", onPhoto);
@@ -935,20 +931,15 @@ async function checkOwners(){
 }
 $("r-plate").addEventListener("input", () => { clearTimeout(ownerTimer); ownerTimer = setTimeout(checkOwners, 400); });
 
-$("r1-next").onclick = () => {
-  if (!digits($("r-num").value)){ setStatus($("ocr-status"), "ใส่เลขทะเบียนก่อน อย่างน้อยตัวเลข", "bad"); $("r-plate").focus(); return; }
-  location.hash = "#report/2";
-};
+
 
 $("pickup-opts").addEventListener("click", e => {
   const b = e.target.closest(".opt"); if (!b) return;
   pickupType = b.dataset.v;
   $("pickup-opts").querySelectorAll(".opt").forEach(x => x.setAttribute("aria-checked", x === b));
   const held = pickupType === "ถือไว้เอง";
-  $("pickup-more").classList.remove("hidden");
-  $("r-place-lbl").textContent = held ? "นัดรับแถวไหน (ไม่บังคับ)" : "ชื่อสถานที่";
-  $("r-place").placeholder = held ? "เช่น หน้าร้านข้าวมันไก่ปากซอย 15" : pickupType === "สถานีตำรวจ" ? "เช่น สภ.ลาดกระบัง" : "เช่น เต็นท์กู้ภัยหน้าวัด…";
-  $("r-contact-lbl").textContent = held ? "เบอร์หรือไลน์ติดต่อ (จำเป็น)" : "เบอร์หรือไลน์ติดต่อ (ไม่บังคับ)";
+  $("r-place").placeholder = held ? "นัดรับแถวไหน (ไม่บังคับ)" : pickupType === "สถานีตำรวจ" ? "ชื่อสถานที่ เช่น สภ.ลาดกระบัง" : "ชื่อสถานที่ เช่น เต็นท์หน้าวัด…";
+  $("r-contact").placeholder = held ? "เบอร์/ไลน์ (จำเป็น)" : "เบอร์/ไลน์ (ไม่บังคับ)";
   setStatus($("submit-status"), ""); $("submit-status").classList.add("hidden");
 });
 
@@ -1004,7 +995,7 @@ $("submit-btn").onclick = async () => {
   const st = $("submit-status"), number = digits($("r-num").value);
   const fail = (msg, el) => { st.classList.remove("hidden"); setStatus(st, msg, "bad"); el?.focus(); };
   if (!ready) return fail("ยังเชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่");
-  if (!number){ location.hash = "#report/1"; return; }
+  if (!number) return fail("ใส่เลขทะเบียนก่อน อย่างน้อยตัวเลข", $("r-plate"));
   if (!pickupType) return fail("เลือกจุดรับคืนก่อน");
   const held = pickupType === "ถือไว้เอง";
   if (!held && !$("r-place").value.trim() && !pickupPos) return fail("ใส่ชื่อสถานที่ หรือปักหมุดจุดรับ", $("r-place"));
