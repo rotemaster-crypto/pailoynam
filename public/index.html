@@ -176,6 +176,12 @@ label.f{display:block;font-weight:500;font-size:.85rem;margin:14px 0 4px;color:v
 .opt[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600;box-shadow:0 0 0 1px var(--accent)}
 .done-ico{display:grid;place-items:center;width:64px;height:64px;margin:24px auto 0;border-radius:50%;background:var(--ok-soft);color:var(--ok)}
 
+dialog.full{width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;border-radius:0;padding:0}
+dialog.full[open]{display:flex;flex-direction:column}
+.map-wrap{position:relative;flex:1;min-height:0}
+#map{position:absolute;inset:0;background:var(--line)}
+.map-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);z-index:500;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.map-bar{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
 dialog{border:0;border-radius:var(--r-lg);padding:0;width:min(94vw,480px);background:var(--surface);color:var(--ink)}
 dialog::backdrop{background:rgba(0,0,0,.5)}
 dialog img{display:block;width:100%}
@@ -210,7 +216,7 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <button class="back hidden" id="back" aria-label="ย้อนกลับ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
     <div class="ttl" id="ttl">ป้ายลอยน้ำ</div>
   </header>
-  <div class="steps hidden" id="steps" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="steps hidden" id="steps" aria-hidden="true"><i></i><i></i></div>
 
   <!-- ===== หน้าแรก = ค้นหา (หน้าตาแบบแรก) ===== -->
   <main class="screen" id="s-home">
@@ -256,58 +262,31 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
     <p class="notice" style="margin-bottom:24px">ผู้ที่เก็บป้ายของคนอื่นได้ควรส่งคืนเจ้าของหรือฝากสถานีตำรวจ ถ้าหาไม่เจอ ทำป้ายใหม่ได้ที่สำนักงานขนส่งโดยไม่ต้องแจ้งความ สายด่วนกรมการขนส่งทางบก 1584</p>
   </main>
 
-  <!-- ===== แจ้ง 1: ถ่ายรูป ===== -->
+  <!-- ===== แจ้ง 1: เลขป้าย + รูป ===== -->
   <main class="screen fit hidden" id="s-r1">
-    <h2 class="q">ถ่ายรูปป้ายที่เจอ</h2>
-    <p class="sub">ให้เห็นตัวอักษรกับจังหวัด เจ้าของจะดูรูปยืนยันว่าเป็นป้ายตัวเอง</p>
-    <label class="camera grow">
-      <input type="file" id="photo" accept="image/*" capture="environment" class="hidden">
-      <span class="ico" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
-      <b>แตะเพื่อถ่ายรูป</b>
-    </label>
-    <div class="bar">
-      <div class="row2">
-        <label class="btn alt sm">เลือกจากคลังภาพ<input type="file" id="photo2" accept="image/*" class="hidden"></label>
-        <button type="button" class="btn alt sm" id="paste-btn">วางข้อความจากโพสต์</button>
-      </div>
-      <button type="button" class="btn text" id="skip-photo">ไม่มีรูป พิมพ์เลขเอง</button>
-    </div>
-  </main>
-
-  <!-- ===== แจ้ง 2: ตรวจเลข ===== -->
-  <main class="screen fit hidden" id="s-r2">
-    <h2 class="q">เลขทะเบียนบนป้าย</h2>
-    <img class="preview hidden" id="r-preview" alt="รูปป้ายที่ถ่าย">
-    <label class="btn alt sm hidden" id="r2-photo" style="margin-bottom:12px">แนบรูปป้ายจากโพสต์<input type="file" id="photo3" accept="image/*" class="hidden"></label>
-    <div class="plate">
+    <h2 class="q">เลขทะเบียนป้ายที่เจอ</h2>
+    <div class="plate" style="margin-top:8px">
       <div class="plate-row">
         <input class="p-prefix" id="r-prefix" placeholder="กข" maxlength="4" aria-label="หมวดอักษร">
         <input class="p-num" id="r-num" placeholder="1234" inputmode="numeric" pattern="[0-9]*" maxlength="4" aria-label="เลขทะเบียน">
       </div>
       <input class="p-prov" id="r-prov" list="provinces" placeholder="จังหวัด" aria-label="จังหวัด">
     </div>
-    <div class="status" id="ocr-status"></div>
     <div class="owner-hint hidden" id="owner-hint"></div>
+
+    <label class="f">รูปป้าย (ไม่บังคับ แต่ช่วยให้เจ้าของมั่นใจ)</label>
+    <img class="preview hidden" id="r-preview" alt="รูปป้ายที่แนบ">
+    <div class="row2">
+      <label class="btn alt sm">ถ่ายรูป<input type="file" id="photo" accept="image/*" capture="environment" class="hidden"></label>
+      <label class="btn alt sm">เลือกจากคลังภาพ<input type="file" id="photo2" accept="image/*" class="hidden"></label>
+    </div>
+    <div class="status" id="ocr-status"></div>
     <div class="grow"></div>
-    <div class="bar"><button type="button" class="btn" id="r2-next">ถัดไป</button></div>
+    <div class="bar"><button type="button" class="btn" id="r1-next">ถัดไป</button></div>
   </main>
 
-  <!-- ===== แจ้ง 3: เจอที่ไหน ===== -->
-  <main class="screen fit hidden" id="s-r3">
-    <h2 class="q">เจอป้ายที่ไหน</h2>
-    <p class="sub">ช่วยให้เจ้าของรู้ว่าตรงกับเส้นทางที่ขับลุยน้ำ</p>
-    <button type="button" class="loc" id="gps-btn">
-      <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-      <span><b id="gps-title">ใช้ตำแหน่งตอนนี้</b><span id="gps-sub">แตะเพื่อปักพิกัดจุดที่เจอ</span></span>
-    </button>
-    <label class="f" for="r-found">บอกจุดเพิ่มเติม (ไม่บังคับ)</label>
-    <input class="inp" id="r-found" placeholder="เช่น หน้าเซเว่น ซ.ลาดกระบัง 15" enterkeyhint="next">
-    <div class="grow"></div>
-    <div class="bar"><button type="button" class="btn" id="r3-next">ถัดไป</button></div>
-  </main>
-
-  <!-- ===== แจ้ง 4: รับคืนที่ไหน ===== -->
-  <main class="screen fit hidden" id="s-r4">
+  <!-- ===== แจ้ง 2: จุดรับ / ติดต่อ + ปักหมุด ===== -->
+  <main class="screen fit hidden" id="s-r2">
     <h2 class="q">เจ้าของรับคืนได้ที่ไหน</h2>
     <div class="opts" id="pickup-opts" role="radiogroup" aria-label="จุดรับคืน" style="margin-top:8px">
       <button type="button" class="opt" role="radio" aria-checked="false" data-v="สถานีตำรวจ">สถานีตำรวจ</button>
@@ -320,8 +299,10 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
       <input class="inp" id="r-place" placeholder="เช่น สภ.ลาดกระบัง" enterkeyhint="next">
       <label class="f" for="r-contact" id="r-contact-lbl">เบอร์หรือไลน์ติดต่อ (ไม่บังคับ)</label>
       <input class="inp" id="r-contact" inputmode="tel" placeholder="คนที่ค้นเลขนี้จะเห็น" enterkeyhint="done">
-      <button type="button" class="btn text" id="pk-btn" style="justify-content:flex-start;padding-left:0">ตอนนี้อยู่ที่จุดรับ? แตะเพื่อปักพิกัด</button>
-      <div class="status" id="pk-status" style="margin-top:0"></div>
+      <button type="button" class="loc" id="pin-btn" style="margin-top:12px">
+        <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+        <span><b id="pin-title">ปักหมุดจุดรับบนแผนที่</b><span id="pin-sub">เจ้าของกดนำทางมาที่หมุดได้เลย (ไม่บังคับ)</span></span>
+      </button>
     </div>
     <div class="grow"></div>
     <div class="bar">
@@ -350,18 +331,20 @@ dialog .x{display:block;width:100%;border:0;border-top:1px solid var(--line);pad
 
 <dialog id="zoom"><img id="zoom-img" alt="รูปป้ายทะเบียนขยาย"><button class="x" id="zoom-close">ปิด</button></dialog>
 
-<dialog id="paste" aria-labelledby="paste-h">
-  <div class="sheet">
-    <h2 id="paste-h">วางข้อความจากโพสต์</h2>
-    <p>คัดลอกข้อความโพสต์ “เจอป้าย” จาก Facebook หรือ LINE มาวาง ระบบจะแยกเลขทะเบียน จังหวัด จุดรับ และเบอร์ให้ แล้วคุณตรวจอีกทีก่อนส่ง</p>
-    <textarea class="inp" id="paste-text" rows="6" placeholder="เช่น เก็บป้ายได้ 1กข 1234 กทม. ฝากไว้ที่ สภ.ลาดกระบัง โทร 081-234-5678" style="min-height:140px;resize:vertical"></textarea>
-    <label class="f" for="paste-url">ลิงก์โพสต์ต้นทาง (ไม่บังคับ)</label>
-    <input class="inp" id="paste-url" inputmode="url" placeholder="https://www.facebook.com/…">
-    <p class="small">ควรขออนุญาตคนโพสต์ก่อน เช่น คอมเมนต์ว่า “ขอลงเว็บป้ายลอยน้ำให้นะครับ”</p>
-    <div class="status" id="paste-status"></div>
-    <button type="button" class="btn" id="paste-go">แยกข้อมูล แล้วไปตรวจ</button>
+<dialog id="mapdlg" class="full" aria-label="ปักหมุดจุดรับ">
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-pin" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="#DC2626" stroke="#fff" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3" fill="#fff"/></svg></div>
   </div>
-  <button class="x" id="paste-close">ยกเลิก</button>
+  <div class="map-bar">
+    <div class="small" style="margin:0 0 8px">ลากแผนที่ให้หมุดสีแดงตรงจุดรับป้าย</div>
+    <div class="status" id="map-status" style="margin:0 0 8px"></div>
+    <div class="row2">
+      <button type="button" class="btn alt sm" id="map-me">ใช้ตำแหน่งปัจจุบัน</button>
+      <button type="button" class="btn sm" id="map-ok">ยืนยันจุดนี้</button>
+    </div>
+    <button type="button" class="btn text" id="map-cancel">ยกเลิก</button>
+  </div>
 </dialog>
 
 <dialog id="lostdlg" aria-labelledby="lost-h">
@@ -452,10 +435,8 @@ function getPosition(){
 /* ================= หน้าจอ: ใช้ hash เพื่อให้ปุ่มย้อนกลับของมือถือทำงาน ================= */
 const SCREENS = {
   home: { ttl: "ป้ายลอยน้ำ", back: null },
-  r1:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 1 จาก 4", back: "#", step: 1 },
-  r2:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 2 จาก 4", back: "#report/1", step: 2 },
-  r3:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 3 จาก 4", back: "#report/2", step: 3 },
-  r4:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 4 จาก 4", back: "#report/3", step: 4 },
+  r1:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 1 จาก 2", back: "#", step: 1 },
+  r2:   { ttl: "แจ้งป้ายที่เจอ", sub: "ขั้น 2 จาก 2", back: "#report/1", step: 2 },
   done: { ttl: "แจ้งเรียบร้อย", back: null }
 };
 let screen = "home", lastDone = null;
@@ -467,7 +448,7 @@ function route(){
     s = st === "done" ? "done" : "r" + st;
     if (!SCREENS[s]) s = "r1";
     // เข้าขั้นกลางทางโดยไม่มีข้อมูล (เช่น รีเฟรช) ให้เริ่มใหม่
-    if ((s === "r3" || s === "r4") && !digits($("r-num").value)) return location.replace("#report/2");
+    if (s === "r2" && !digits($("r-num").value)) return location.replace("#report/1");
     if (s === "done" && !lastDone) return location.replace("#");
   }
   if (s === "home") openFromHash();
@@ -484,12 +465,7 @@ function route(){
 }
 const onEnter = {
   home: () => { renderTracked(); current.key = null; runSearch(); },
-  // มาจากโพสต์: คนกรอกไม่ได้อยู่ที่จุดเจอ จึงไม่ปักพิกัดอัตโนมัติ
-  r2: () => checkOwners(),
-  r3: () => {
-    if (fromPost){ if (!foundPos) $("gps-sub").textContent = "มาจากโพสต์: ไม่ต้องปักพิกัด ใช้จุดที่บอกในโพสต์ด้านล่าง"; return; }
-    if (!foundPos && !gpsBusy) grabGps();
-  },
+  r1: () => checkOwners(),
   done: () => {
     const p = lastDone;
     $("done-plate").innerHTML = plateHtml(p.prefix, p.number, p.province, "lg");
@@ -589,7 +565,7 @@ function cardHtml(p, qp){
     <div class="foot">
       ${navUrl && !returned ? `<a class="btn" href="${navUrl}" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4.5 20.3l.7.7L12 18l6.8 3 .7-.7z"/></svg>นำทางไปรับป้าย</a>` : ""}
       ${returned ? "" : contactHtml(p)}
-      <div class="acts">${map}${p.sourceUrl && /^https:\/\//.test(p.sourceUrl) ? `<a href="${esc(p.sourceUrl)}" target="_blank" rel="noopener nofollow">↗ โพสต์ต้นทาง</a>` : ""}${returned ? "" : `<button data-done="${esc(p.id)}">ได้คืนแล้ว</button>`}</div>
+      <div class="acts">${map}${returned ? "" : `<button data-done="${esc(p.id)}">ได้คืนแล้ว</button>`}</div>
     </div></article>`;
 }
 
@@ -809,8 +785,8 @@ function openFromHash(){
   $("s-num").value = t.n; $("s-prefix").value = t.p; $("s-prov").value = t.v;
 }
 
-/* ================= แจ้งป้าย (ทีละขั้น) ================= */
-let photoDataUrl = null, foundPos = null, pickupPos = null, gpsBusy = false, pickupType = null;
+/* ================= แจ้งป้าย (2 ขั้น: เลขป้าย+รูป → จุดรับ+หมุด) ================= */
+let photoDataUrl = null, pickupPos = null, pickupType = null;
 
 function compress(file, maxSide=720, q=0.7){
   return new Promise((res, rej) => {
@@ -829,79 +805,12 @@ function compress(file, maxSide=720, q=0.7){
 async function onPhoto(e){
   const f = e.target.files[0]; e.target.value = ""; if (!f) return;
   try { photoDataUrl = await compress(f); }
-  catch { alert("เปิดรูปนี้ไม่ได้ ลองถ่ายใหม่"); return; }
+  catch { setStatus($("ocr-status"), "เปิดรูปนี้ไม่ได้ ลองถ่ายใหม่", "bad"); return; }
   $("r-preview").src = photoDataUrl; $("r-preview").classList.remove("hidden");
-  $("r2-photo").classList.add("hidden");
-  location.hash = "#report/2";
-  if (fromPost) return;
-  setStatus($("ocr-status"), "ดูรูปแล้วพิมพ์เลขทะเบียนให้ตรง"); setTimeout(() => $("r-num").focus(), 250);
-  if (!foundPos) grabGps(true);
+  setStatus($("ocr-status"), "✓ แนบรูปแล้ว", "good");
 }
-$("photo").addEventListener("change", e => { fromPost = false; onPhoto(e); });
-$("photo2").addEventListener("change", e => { fromPost = false; onPhoto(e); });
-$("skip-photo").onclick = () => {
-  photoDataUrl = null; fromPost = false; sourceUrl = ""; $("r-preview").classList.add("hidden");
-  setStatus($("ocr-status"), "พิมพ์เลขทะเบียนตามป้ายที่เจอ");
-  location.hash = "#report/2"; setTimeout(() => $("r-num").focus(), 250);
-};
-
-/* ---------- วางข้อความจากโพสต์: แยกข้อมูลด้วย logic ล้วน แล้วให้คนตรวจก่อนส่ง ---------- */
-const PROVINCE_ALIAS = { "กทม":"กรุงเทพมหานคร", "กรุงเทพ":"กรุงเทพมหานคร", "โคราช":"นครราชสีมา", "อยุธยา":"พระนครศรีอยุธยา",
-  "นครศรี":"นครศรีธรรมราช", "สุราษ":"สุราษฎร์ธานี", "ประจวบ":"ประจวบคีรีขันธ์", "ปากน้ำ":"สมุทรปราการ" };
-function parsePost(raw){
-  const text = String(raw||"").replace(/[๐-๙]/g, d => "๐๑๒๓๔๕๖๗๘๙".indexOf(d));
-  const out = {};
-  // ป้ายไทย: [เลขนำ]หมวดอักษร 1-3 ตัว ตามด้วยเลข 1-4 หลัก เช่น 1กข 1234, กข-1234, ฒฒ1234
-  // เลือกตัวที่น่าจะเป็นป้ายที่สุด: เลข 4 หลัก หรือมีเลขนำหน้าหมวดได้คะแนน คำอย่าง "ซอย 15" ถูกตัดทิ้ง
-  const STOP = /^(ซอย|ซ|ถนน|ถ|ม|ต|อ|จ|ชม|นท|ปี|บ|ห้อง|ตึก|ชั้น)$/;
-  const cands = [...text.matchAll(/(?<![ก-๙0-9a-z])(\d?\s?[ก-ฮ]{1,3})\s*[-–.]?\s*(\d{1,4})(?!\d)/g)]
-    .map(m => ({ prefix: m[1].replace(/\s/g,""), number: m[2] }))
-    .filter(c => !STOP.test(c.prefix.replace(/^\d/,"")))
-    .map(c => ({ ...c, s: (c.number.length === 4 ? 2 : 0) + (/^\d/.test(c.prefix) ? 1 : 0) + (c.prefix.replace(/^\d/,"").length === 2 ? 1 : 0) }))
-    .sort((a,b) => b.s - a.s);
-  if (cands[0]){ out.prefix = cands[0].prefix; out.number = cands[0].number; }
-  // จังหวัด: ชื่อเต็มก่อน (ยาวสุดก่อน กันชื่อซ้อน) แล้วค่อยชื่อย่อ
-  out.province = [...PROVINCES].sort((a,b) => b.length - a.length).find(p => text.includes(p))
-    || Object.entries(PROVINCE_ALIAS).find(([k]) => text.includes(k))?.[1] || "";
-  // เบอร์มือถือ/บ้าน หรือไอดีไลน์
-  const phone = text.match(/0\d{1,2}[-\s.]?\d{3}[-\s.]?\d{3,4}/);
-  const line = text.match(/(?:line|ไลน์|ไอดี)\s*(?:id)?\s*[:：]?\s*@?([a-z0-9._-]{3,30})/i);
-  out.contact = phone ? phone[0].replace(/[\s.]/g,"-") : line ? "LINE: " + line[1] : "";
-  // จุดรับคืน
-  const station = text.match(/(สภ\.?\s?[ก-๙a-z]+|สน\.?\s?[ก-๙a-z]+|สถานีตำรวจ[ก-๙\s]{0,30}|ป้อมตำรวจ[ก-๙\s]{0,30})/i);
-  const rescue = text.match(/((?:มูลนิธิ|กู้ภัย|เต็นท์|ศูนย์พักพิง)[ก-๙\s]{0,30})/);
-  const office = text.match(/((?:สำนักงานเขต|เขต|อบต\.?|เทศบาล)[ก-๙\s]{0,30})/);
-  if (station){ out.pickupType = "สถานีตำรวจ"; out.pickupPlace = station[1].trim(); }
-  else if (rescue){ out.pickupType = "จุดกู้ภัย"; out.pickupPlace = rescue[1].trim(); }
-  else if (office){ out.pickupType = "สำนักงานเขต/อบต."; out.pickupPlace = office[1].trim(); }
-  else if (out.contact){ out.pickupType = "ถือไว้เอง"; }
-  out.note = ("จากโพสต์: " + text.replace(/\s+/g," ").trim()).slice(0,200);
-  return out;
-}
-let fromPost = false, sourceUrl = "";
-$("paste-btn").onclick = () => { setStatus($("paste-status"), ""); $("paste").showModal(); setTimeout(() => $("paste-text").focus(), 100); };
-$("paste-close").onclick = () => $("paste").close();
-$("paste-go").onclick = () => {
-  const p = parsePost($("paste-text").value);
-  if (!p.number){ setStatus($("paste-status"), "หาเลขทะเบียนในข้อความไม่เจอ ลองวางข้อความที่มีเลขป้าย หรือกดยกเลิกแล้วพิมพ์เอง", "bad"); return; }
-  const url = $("paste-url").value.trim();
-  sourceUrl = /^https:\/\/\S{8,290}$/.test(url) ? url : "";
-  fromPost = true;
-  // ล้างจุดรับของโพสต์ก่อนหน้า กันข้อมูลค้างข้ามโพสต์
-  pickupType = null; pickupPos = null; $("r-place").value = ""; $("r-contact").value = "";
-  $("pickup-opts").querySelectorAll(".opt").forEach(x => x.setAttribute("aria-checked", "false"));
-  $("pickup-more").classList.add("hidden"); setStatus($("pk-status"), "ไม่ปักก็ได้ เจ้าของจะนำทางด้วยชื่อสถานที่");
-  $("r-prefix").value = p.prefix.slice(0,4); $("r-num").value = p.number; $("r-prov").value = p.province;
-  $("r-found").value = p.note;
-  if (p.pickupType) document.querySelector(`.opt[data-v="${p.pickupType}"]`)?.click();
-  if (p.pickupPlace) $("r-place").value = p.pickupPlace.slice(0,200);
-  if (p.contact) $("r-contact").value = p.contact.slice(0,80);
-  photoDataUrl = null; $("r-preview").classList.add("hidden"); $("r2-photo").classList.remove("hidden");
-  $("paste").close();
-  setStatus($("ocr-status"), "✓ แยกข้อมูลจากโพสต์แล้ว ตรวจเลขให้ตรงกับรูปในโพสต์", "good");
-  location.hash = "#report/2";
-};
-$("photo3").addEventListener("change", onPhoto);
+$("photo").addEventListener("change", onPhoto);
+$("photo2").addEventListener("change", onPhoto);
 
 let ownerTimer;
 async function checkOwners(){
@@ -917,29 +826,9 @@ async function checkOwners(){
 }
 $("r-num").addEventListener("input", () => { clearTimeout(ownerTimer); ownerTimer = setTimeout(checkOwners, 400); });
 
-$("r2-next").onclick = () => {
+$("r1-next").onclick = () => {
   if (!digits($("r-num").value)){ setStatus($("ocr-status"), "ใส่เลขทะเบียนก่อน อย่างน้อยตัวเลข", "bad"); $("r-num").focus(); return; }
-  location.hash = "#report/3";
-};
-
-async function grabGps(silent){
-  gpsBusy = true;
-  $("gps-title").textContent = "กำลังหาตำแหน่ง…"; $("gps-sub").textContent = "รอสักครู่";
-  try{
-    foundPos = await getPosition();
-    $("gps-btn").classList.add("ok");
-    $("gps-title").textContent = "✓ ปักพิกัดแล้ว";
-    $("gps-sub").textContent = `แม่นยำประมาณ ${foundPos.acc} เมตร · แตะเพื่ออัปเดต`;
-  }catch{
-    $("gps-btn").classList.remove("ok");
-    $("gps-title").textContent = "ใช้ตำแหน่งตอนนี้";
-    $("gps-sub").textContent = silent ? "แตะเพื่อปักพิกัด หรือพิมพ์บอกจุดด้านล่างแทน" : "เปิดตำแหน่งไม่ได้ พิมพ์บอกจุดด้านล่างแทนได้";
-  }finally{ gpsBusy = false; }
-}
-$("gps-btn").onclick = () => grabGps(false);
-$("r3-next").onclick = () => {
-  if (!foundPos && !$("r-found").value.trim()){ $("gps-sub").textContent = "ปักพิกัด หรือพิมพ์บอกจุดที่เจออย่างน้อยหนึ่งอย่าง"; $("r-found").focus(); return; }
-  location.hash = "#report/4";
+  location.hash = "#report/2";
 };
 
 $("pickup-opts").addEventListener("click", e => {
@@ -952,36 +841,77 @@ $("pickup-opts").addEventListener("click", e => {
   $("r-place").placeholder = held ? "เช่น หน้าร้านข้าวมันไก่ปากซอย 15" : pickupType === "สถานีตำรวจ" ? "เช่น สภ.ลาดกระบัง" : "เช่น เต็นท์กู้ภัยหน้าวัด…";
   $("r-contact-lbl").textContent = held ? "เบอร์หรือไลน์ติดต่อ (จำเป็น)" : "เบอร์หรือไลน์ติดต่อ (ไม่บังคับ)";
   setStatus($("submit-status"), ""); $("submit-status").classList.add("hidden");
-  setTimeout(() => (held ? $("r-contact") : $("r-place")).focus(), 150);
 });
-$("pk-btn").onclick = async () => {
-  setStatus($("pk-status"), `<span class="spin"></span>กำลังหาตำแหน่ง…`);
-  try{ pickupPos = await getPosition(); setStatus($("pk-status"), "✓ ปักจุดรับแล้ว เจ้าของกดนำทางมาถึงตรงนี้ได้เลย", "good"); }
-  catch{ setStatus($("pk-status"), "เปิดตำแหน่งไม่ได้ ใส่ชื่อสถานที่ให้ชัดแทนได้", "bad"); }
+
+/* ---------- ปักหมุดจุดรับ: แผนที่ OpenStreetMap (ฟรี) หมุดอยู่กลางจอ ลากแผนที่ให้ตรงจุด ---------- */
+let leafletReady, map;
+function loadLeaflet(){
+  if (leafletReady) return leafletReady;
+  leafletReady = new Promise((res, rej) => {
+    const css = document.createElement("link");
+    css.rel = "stylesheet"; css.href = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(css);
+    const js = document.createElement("script");
+    js.src = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js";
+    js.onload = () => res(window.L); js.onerror = rej;
+    document.head.appendChild(js);
+  });
+  return leafletReady;
+}
+function renderPin(){
+  $("pin-btn").classList.toggle("ok", !!pickupPos);
+  $("pin-title").textContent = pickupPos ? "✓ ปักหมุดจุดรับแล้ว" : "ปักหมุดจุดรับบนแผนที่";
+  $("pin-sub").textContent = pickupPos ? "เจ้าของกดนำทางมาที่หมุดได้เลย · แตะเพื่อแก้" : "เจ้าของกดนำทางมาที่หมุดได้เลย (ไม่บังคับ)";
+}
+async function goToMe(){
+  setStatus($("map-status"), `<span class="spin"></span>กำลังหาตำแหน่ง…`);
+  try{ const p = await getPosition(); map.setView([p.lat, p.lng], 17); setStatus($("map-status"), ""); }
+  catch{ setStatus($("map-status"), "เปิดตำแหน่งไม่ได้ ลากแผนที่หาจุดเองได้", "bad"); }
+}
+$("pin-btn").onclick = async () => {
+  $("mapdlg").showModal();
+  setStatus($("map-status"), `<span class="spin"></span>กำลังโหลดแผนที่…`);
+  try{
+    const L = await loadLeaflet();
+    if (!map){
+      map = L.map("map", { zoomControl: false, attributionControl: true }).setView([13.7563, 100.5018], 11);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+    }
+    setTimeout(() => map.invalidateSize(), 50);
+    setStatus($("map-status"), "");
+    if (pickupPos) map.setView([pickupPos.lat, pickupPos.lng], 17); else goToMe();
+  }catch{ setStatus($("map-status"), "โหลดแผนที่ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่", "bad"); }
 };
+$("map-me").onclick = () => map && goToMe();
+$("map-ok").onclick = () => {
+  if (!map) return;
+  const c = map.getCenter();
+  pickupPos = { lat: +c.lat.toFixed(6), lng: +c.lng.toFixed(6) };
+  renderPin(); $("mapdlg").close();
+};
+$("map-cancel").onclick = () => $("mapdlg").close();
 
 $("submit-btn").onclick = async () => {
   const st = $("submit-status"), number = digits($("r-num").value);
-  const fail = (msg, el) => { st.classList.remove("hidden"); setStatus(st, msg, "bad"); st.classList.remove("hidden"); el?.focus(); };
+  const fail = (msg, el) => { st.classList.remove("hidden"); setStatus(st, msg, "bad"); el?.focus(); };
   if (!ready) return fail("ยังเชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่");
-  if (!number){ location.hash = "#report/2"; return; }
+  if (!number){ location.hash = "#report/1"; return; }
   if (!pickupType) return fail("เลือกจุดรับคืนก่อน");
   const held = pickupType === "ถือไว้เอง";
-  if (!held && !$("r-place").value.trim()) return fail("ใส่ชื่อสถานที่รับคืน เช่น สภ.ไหน", $("r-place"));
+  if (!held && !$("r-place").value.trim() && !pickupPos) return fail("ใส่ชื่อสถานที่ หรือปักหมุดจุดรับ", $("r-place"));
   if (held && !$("r-contact").value.trim()) return fail("ถือไว้เอง ต้องใส่เบอร์หรือไลน์ให้เจ้าของติดต่อ", $("r-contact"));
 
   $("submit-btn").disabled = true; st.classList.remove("hidden"); setStatus(st, `<span class="spin"></span>กำลังส่ง…`);
   const data = {
     prefix: normPrefix($("r-prefix").value).slice(0,4), number, numberKey: number,
     province: $("r-prov").value.trim().slice(0,40),
-    lat: foundPos?.lat ?? null, lng: foundPos?.lng ?? null,
+    lat: null, lng: null,
     pickupLat: pickupPos?.lat ?? null, pickupLng: pickupPos?.lng ?? null,
-    foundNote: $("r-found").value.trim().slice(0,200),
+    foundNote: "",
     pickupType, pickupPlace: $("r-place").value.trim().slice(0,200),
     contact: $("r-contact").value.trim().slice(0,80),
     status: "waiting", createdAt: Date.now(), uid: auth.currentUser.uid
   };
-  if (sourceUrl) data.sourceUrl = sourceUrl;
   try{
     const ref = doc(plateCol);
     if (photoDataUrl) await setDoc(doc(fs, "photos", ref.id), { dataUrl: photoDataUrl });
@@ -992,13 +922,12 @@ $("submit-btn").onclick = async () => {
   }catch{ setStatus(st, "ส่งไม่สำเร็จ ลองกดอีกครั้ง", "bad"); }
   finally{ $("submit-btn").disabled = false; }
 };
-// เก็บจุดรับไว้ใช้ต่อ (อาสาที่แจ้งหลายป้ายมักฝากที่เดียวกัน)
+// เก็บจุดรับ/หมุดไว้ใช้ต่อ (อาสาที่แจ้งหลายป้ายมักฝากที่เดียวกัน)
 function resetReport(){
-  ["r-prefix","r-num","r-prov","r-found"].forEach(id => $(id).value = "");
-  photoDataUrl = null; foundPos = null; fromPost = false; sourceUrl = "";
-  $("paste-text").value = ""; $("paste-url").value = ""; $("r2-photo").classList.add("hidden");
+  ["r-prefix","r-num","r-prov"].forEach(id => $(id).value = "");
+  photoDataUrl = null;
   $("r-preview").classList.add("hidden"); setStatus($("ocr-status"), "");
-  $("gps-btn").classList.remove("ok"); $("gps-title").textContent = "ใช้ตำแหน่งตอนนี้"; $("gps-sub").textContent = "แตะเพื่อปักพิกัดจุดที่เจอ";
+  $("owner-hint").classList.add("hidden");
   $("submit-status").classList.add("hidden");
 }
 
